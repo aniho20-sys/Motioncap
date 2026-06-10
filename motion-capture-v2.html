@@ -480,7 +480,7 @@
 
   // ---------- Compensation thresholds (angle-based proxy) ----------
   const THRESH = {
-    pelvisTilt: 4,    // ° — proxy for >3cm hip height difference
+    pelvisTilt: 2,    // ° — proxy for >3cm hip height difference (lowered from 4 to catch subtle pelvic shifts)
     shoulderTilt: 4,  // ° — shoulder elevation / trunk side-bend
     trunkLean: 10,    // ° — forward trunk lean from vertical
     asymmetry: 15,    // ° — left/right joint angle asymmetry
@@ -986,7 +986,7 @@
   });
   pose.setOptions({
     modelComplexity: 1,
-    smoothLandmarks: true,
+    smoothLandmarks: false,
     enableSegmentation: false,
     minDetectionConfidence: 0.5,
     minTrackingConfidence: 0.5
