@@ -89,7 +89,7 @@
   /* ---------- Mode bar ---------- */
   #modebar{
     position:absolute; top:64px; left:0; right:0;
-    display:flex; gap:8px; justify-content:center;
+    display:flex; gap:8px; justify-content:center; flex-wrap:wrap; row-gap:6px;
     padding:0 16px; z-index:20;
     pointer-events:auto;
   }
@@ -100,6 +100,29 @@
     padding:8px 16px; cursor:pointer; backdrop-filter:blur(6px);
   }
   .mode-btn.active{background:var(--color-primary); border-color:var(--color-primary); color:#fff;}
+
+  /* ---------- Camera hint banner ---------- */
+  #camera-hint{
+    position:absolute; top:104px; left:0; right:0;
+    display:flex; justify-content:center;
+    padding:0 16px; z-index:20; pointer-events:none;
+  }
+  #camera-hint span{
+    font-family:var(--font-ui); font-size:11px; font-weight:600;
+    color:var(--color-text-dim); background:rgba(20,20,20,.6);
+    border:1px solid var(--color-border); border-radius:999px;
+    padding:6px 14px; backdrop-filter:blur(6px);
+  }
+
+  /* ---------- View toggle (squat side/front) ---------- */
+  .view-toggle{display:flex; gap:6px; margin-bottom:12px;}
+  .view-btn{
+    font-family:var(--font-ui); font-size:11px; font-weight:600;
+    color:var(--color-text); background:var(--color-surface-2);
+    border:1px solid var(--color-border); border-radius:999px;
+    padding:6px 14px; cursor:pointer;
+  }
+  .view-btn.active{background:var(--color-primary); border-color:var(--color-primary); color:#fff;}
 
   /* ---------- Drawer ---------- */
   #drawer{
@@ -167,6 +190,15 @@
   .align-row .value.danger{color:var(--color-danger);}
   .align-row .value.ok{color:var(--color-ok);}
 
+  /* ---------- Rep log (squat / deadlift) ---------- */
+  .rep-log{display:flex; flex-direction:column; gap:6px; margin-top:10px; max-height:120px; overflow-y:auto;}
+  .rep-log-item{
+    display:flex; justify-content:space-between; font-family:var(--font-data);
+    font-size:11px; color:var(--color-text-dim); background:var(--color-surface-2);
+    border-radius:8px; padding:6px 10px; border:1px solid var(--color-border);
+  }
+  .rep-log-item.warn{color:var(--color-warn); border-color:var(--color-warn);}
+
   #alerts{display:flex; flex-direction:column; gap:8px;}
   .alert-item{
     background:rgba(255,196,0,.1); border:1px solid var(--color-warn);
@@ -209,7 +241,10 @@
     <button class="mode-btn active" data-mode="hip">髖 Hip</button>
     <button class="mode-btn" data-mode="shoulder">肩 Shoulder</button>
     <button class="mode-btn" data-mode="full">全身 Full</button>
+    <button class="mode-btn" data-mode="squat">深蹲 Squat</button>
+    <button class="mode-btn" data-mode="deadlift">硬舉 Deadlift</button>
   </div>
+  <div id="camera-hint" class="hidden"></div>
 
   <div id="drawer">
     <div id="drawer-handle">
@@ -269,6 +304,72 @@
         <div class="value" id="trunkLean">--°</div>
       </div>
 
+      <div id="section-squat" class="hidden">
+        <div class="section-title">深蹲分析 Squat Analysis</div>
+        <div class="view-toggle" id="squat-view-toggle">
+          <button class="view-btn active" data-view="side">側面 Side</button>
+          <button class="view-btn" data-view="front">正面 Front</button>
+        </div>
+
+        <div id="squat-side-metrics" class="angle-grid">
+          <div class="angle-card">
+            <div class="name">蹲深 Depth</div>
+            <div class="value" id="squatDepth" style="font-size:18px;">--</div>
+            <div class="rom" id="squatDepthDelta">Hip-Knee Δ: --</div>
+          </div>
+        </div>
+
+        <div id="squat-front-metrics" class="angle-grid hidden">
+          <div class="angle-card">
+            <div class="name">膝關節追蹤 Knee Tracking</div>
+            <div class="value" id="kneeValgusRatio" style="font-size:18px;">--</div>
+            <div class="rom" id="kneeValgusNote">Knee/Ankle ratio</div>
+          </div>
+        </div>
+
+        <div class="section-title">深蹲次數 Rep Log</div>
+        <div class="align-row">
+          <div class="name">次數 Reps</div>
+          <div class="value" id="squatRepCount">0</div>
+        </div>
+        <div class="align-row">
+          <div class="name">上一下 Last Rep</div>
+          <div class="value" id="squatLastRep" style="font-size:13px;">--</div>
+        </div>
+        <div id="squatRepLog" class="rep-log"></div>
+      </div>
+
+      <div id="section-deadlift" class="hidden">
+        <div class="section-title">硬舉分析 Deadlift Analysis</div>
+        <div class="angle-grid">
+          <div class="angle-card">
+            <div class="name">髖鉸鏈 Hip Hinge</div>
+            <div class="value" id="hingeAngle">--<small>°</small></div>
+          </div>
+          <div class="angle-card">
+            <div class="name">背部角度 Back Angle</div>
+            <div class="value" id="backAngle">--<small>°</small></div>
+            <div class="rom" id="backAngleDelta">vs neutral: --</div>
+          </div>
+        </div>
+
+        <div class="section-title">硬舉次數 Rep Log</div>
+        <div class="align-row">
+          <div class="name">次數 Reps</div>
+          <div class="value" id="deadliftRepCount">0</div>
+        </div>
+        <div class="align-row">
+          <div class="name">上一下 Last Rep</div>
+          <div class="value" id="deadliftLastRep" style="font-size:13px;">--</div>
+        </div>
+        <div id="deadliftRepLog" class="rep-log"></div>
+
+        <div class="align-row">
+          <div class="name">校準中立姿勢 Calibrate Neutral</div>
+          <button class="btn btn-secondary" id="btn-calibrate" style="flex:none; padding:8px 16px; font-size:12px;">校準 Calibrate</button>
+        </div>
+      </div>
+
       <div class="section-title">代償偵測 Compensation Alerts</div>
       <div id="alerts"><div class="alert-empty">未偵測到代償</div></div>
 
@@ -303,6 +404,9 @@
     LEFT_HIP:23,      RIGHT_HIP:24,
     LEFT_KNEE:25,     RIGHT_KNEE:26,
     LEFT_ANKLE:27,    RIGHT_ANKLE:28,
+    // Reserved for future stance-width / foot-flat checks
+    LEFT_HEEL:29,     RIGHT_HEEL:30,
+    LEFT_FOOT_INDEX:31, RIGHT_FOOT_INDEX:32,
   };
   const VIS_THRESHOLD = 0.5;
 
@@ -326,6 +430,12 @@
   }
   function fmt(v, digits=0){
     return v === null || v === undefined || Number.isNaN(v) ? '--' : v.toFixed(digits);
+  }
+  function avgOf(a, b){
+    if(a === null && b === null) return null;
+    if(a === null) return b;
+    if(b === null) return a;
+    return (a + b) / 2;
   }
 
   // ---------- DOM refs ----------
@@ -361,17 +471,63 @@
   const sumShoulder = document.getElementById('sum-shoulder');
   const alertsEl = document.getElementById('alerts');
 
+  const cardEls = {};
+  const sectionSquat = document.getElementById('section-squat');
+  const sectionDeadlift = document.getElementById('section-deadlift');
+  const cameraHint = document.getElementById('camera-hint');
+  const squatSideMetrics = document.getElementById('squat-side-metrics');
+  const squatFrontMetrics = document.getElementById('squat-front-metrics');
+
   // ---------- Compensation thresholds (angle-based proxy) ----------
   const THRESH = {
     pelvisTilt: 4,    // ° — proxy for >3cm hip height difference
     shoulderTilt: 4,  // ° — shoulder elevation / trunk side-bend
     trunkLean: 10,    // ° — forward trunk lean from vertical
     asymmetry: 15,    // ° — left/right joint angle asymmetry
+    kneeValgusRatio: 0.80, // knee-dist/ankle-dist below this = knees caving in (front view only)
+    backRounding: 15, // ° deviation from calibrated neutral = back rounding (deadlift)
+    kneeTravel: 12,   // ° knee-angle change during deadlift rep = excessive travel
+  };
+
+  // ---------- Squat / Deadlift tunables (PLACEHOLDER — Ani to validate against real footage) ----------
+  const SQUAT_THRESH = {
+    kneeStanding: 165,    // ° knee angle = "standing"
+    kneeBottom: 100,      // ° knee angle = "at depth" trigger
+    hysteresis: 8,
+    parallelDelta: 0,     // hipY - kneeY <= this => at/below parallel
+    shallowDelta: 0.04,   // hipY - kneeY > this => shallow (normalized coords)
+  };
+  const DEADLIFT_THRESH = {
+    hipStanding: 165,     // ° hip angle = "standing/locked out"
+    hipHinge: 110,        // ° hip angle = "at hinge bottom" trigger
+    hysteresis: 8,
+  };
+
+  // ---------- Mode state ----------
+  let currentMode = 'hip';
+  let squatView = 'side'; // 'side' | 'front'
+
+  const MODE_ANGLE_CARDS = {
+    hip:      ['hipL','hipR'],
+    shoulder: ['shoulderL','shoulderR'],
+    full:     ['hipL','hipR','kneeL','kneeR','shoulderL','shoulderR'],
+    squat:    ['hipL','hipR','kneeL','kneeR'],
+    deadlift: ['hipL','hipR','kneeL','kneeR'],
+  };
+
+  const MODE_HINTS = {
+    hip: '', shoulder: '', full: '',
+    squat: {
+      side:  '建議側面拍攝以分析深蹲深度與背部角度 — Side view recommended for depth & back angle',
+      front: '建議正面拍攝以檢查膝關節內扣 — Front view recommended for knee tracking',
+    },
+    deadlift: '建議側面拍攝以分析髖鉸鏈與背部角度 — Side view recommended for hip hinge & back angle',
   };
 
   // ---------- Recording / ROM tracking ----------
   let recording = false;
   const ROM_KEYS = ['hipL','hipR','kneeL','kneeR','shoulderL','shoulderR'];
+  ROM_KEYS.forEach(k => { cardEls[k] = valueEls[k].closest('.angle-card'); });
   let romData = {};
   function resetRom(){
     romData = {};
@@ -384,6 +540,8 @@
     recording = !recording;
     if(recording){
       resetRom();
+      if(currentMode === 'squat') resetSquatRep();
+      if(currentMode === 'deadlift') resetDeadliftRep();
       recordBtn.textContent = '停止評估 Stop';
       recordBtn.classList.remove('btn-primary');
       recordBtn.classList.add('btn-secondary');
@@ -399,6 +557,8 @@
     recordBtn.classList.add('btn-primary');
     recordBtn.classList.remove('btn-secondary');
     resetRom();
+    resetSquatRep();
+    resetDeadliftRep();
   });
 
   function trackRom(key, val){
@@ -408,6 +568,168 @@
     if(val > r.max) r.max = val;
     romEls[key].textContent = `ROM: ${fmt(r.min)}° – ${fmt(r.max)}°`;
   }
+
+  // ---------- Squat rep state machine ----------
+  let squatState = 'standing';
+  let squatRepCount = 0;
+  let prevKneeAvg = null;
+  let repMinKneeAvg = null;
+  let repMinHipKneeDelta = null;
+  let repBackAngleAtBottom = null;
+  const squatReps = [];
+
+  function resetSquatRep(){
+    squatState = 'standing'; squatRepCount = 0; prevKneeAvg = null;
+    repMinKneeAvg = null; repMinHipKneeDelta = null; repBackAngleAtBottom = null;
+    squatReps.length = 0;
+    document.getElementById('squatRepCount').textContent = '0';
+    document.getElementById('squatLastRep').textContent = '--';
+    document.getElementById('squatRepLog').innerHTML = '';
+  }
+
+  function classifySquatDepth(hipKneeDelta){
+    if(hipKneeDelta === null) return '--';
+    if(hipKneeDelta >= SQUAT_THRESH.shallowDelta) return '淺 Shallow';
+    if(hipKneeDelta > -SQUAT_THRESH.parallelDelta) return '平行 Parallel';
+    return '低於平行 Below Parallel';
+  }
+
+  function computeKneeValgusRatio(LK, RK, LA, RA){
+    if(!visible(LK,RK,LA,RA)) return null;
+    const kneeDist = Math.abs(LK.x - RK.x);
+    const ankleDist = Math.abs(LA.x - RA.x);
+    if(ankleDist === 0) return null;
+    return kneeDist / ankleDist;
+  }
+
+  function updateSquatRep(kneeAvg, hipKneeDelta, backAngle, recording){
+    if(kneeAvg === null) return;
+    if(repMinKneeAvg === null || kneeAvg < repMinKneeAvg) repMinKneeAvg = kneeAvg;
+    if(hipKneeDelta !== null && (repMinHipKneeDelta === null || hipKneeDelta < repMinHipKneeDelta)){
+      repMinHipKneeDelta = hipKneeDelta;
+      repBackAngleAtBottom = backAngle;
+    }
+    switch(squatState){
+      case 'standing':
+        if(kneeAvg < SQUAT_THRESH.kneeStanding - SQUAT_THRESH.hysteresis) squatState = 'descending';
+        break;
+      case 'descending':
+        if(kneeAvg <= SQUAT_THRESH.kneeBottom) squatState = 'bottom';
+        break;
+      case 'bottom':
+        if(prevKneeAvg !== null && kneeAvg > prevKneeAvg + 0.5) squatState = 'ascending';
+        break;
+      case 'ascending':
+        if(kneeAvg >= SQUAT_THRESH.kneeStanding){
+          squatState = 'standing';
+          if(recording) finalizeSquatRep();
+        } else if(prevKneeAvg !== null && kneeAvg < prevKneeAvg - 0.5){
+          squatState = 'bottom';
+        }
+        break;
+    }
+    prevKneeAvg = kneeAvg;
+  }
+
+  function finalizeSquatRep(){
+    squatRepCount++;
+    const depth = classifySquatDepth(repMinHipKneeDelta);
+    const back = repBackAngleAtBottom;
+    squatReps.push({n: squatRepCount, depth, kneeMin: repMinKneeAvg, backAngle: back});
+    document.getElementById('squatRepCount').textContent = String(squatRepCount);
+    document.getElementById('squatLastRep').textContent =
+      `#${squatRepCount} ${depth} · 膝${fmt(repMinKneeAvg)}° · 背${back===null?'--':fmt(back)+'°'}`;
+    const log = document.getElementById('squatRepLog');
+    const isWarn = depth === '淺 Shallow';
+    const item = document.createElement('div');
+    item.className = 'rep-log-item' + (isWarn ? ' warn' : '');
+    item.innerHTML = `<span>第 ${squatRepCount} 下</span><span>${depth} · 膝 ${fmt(repMinKneeAvg)}° · 背 ${back===null?'--':fmt(back)+'°'}</span>`;
+    log.prepend(item);
+    repMinKneeAvg = null; repMinHipKneeDelta = null; repBackAngleAtBottom = null;
+  }
+
+  // ---------- Deadlift rep state machine ----------
+  let deadliftState = 'standing';
+  let deadliftRepCount = 0;
+  let prevHipAvg = null;
+  let repMinHipAvg = null;
+  let repBackAngleAtHinge = null;
+  let repKneeAtStart = null;
+  let repMaxKneeTravel = null;
+  let neutralBackAngle = null;
+  let lastBackAngle = null; // updated every frame from trunkLean, used by Calibrate button
+  const deadliftReps = [];
+
+  function resetDeadliftRep(){
+    deadliftState = 'standing'; deadliftRepCount = 0; prevHipAvg = null;
+    repMinHipAvg = null; repBackAngleAtHinge = null; repKneeAtStart = null; repMaxKneeTravel = null;
+    deadliftReps.length = 0;
+    document.getElementById('deadliftRepCount').textContent = '0';
+    document.getElementById('deadliftLastRep').textContent = '--';
+    document.getElementById('deadliftRepLog').innerHTML = '';
+  }
+
+  function updateDeadliftRep(hipAvg, kneeAvg, backAngle, recording){
+    if(hipAvg === null) return;
+    if(repMinHipAvg === null || hipAvg < repMinHipAvg){
+      repMinHipAvg = hipAvg;
+      repBackAngleAtHinge = backAngle;
+    }
+    if(repKneeAtStart === null && deadliftState === 'standing') repKneeAtStart = kneeAvg;
+    if(kneeAvg !== null && repKneeAtStart !== null){
+      const travel = Math.abs(kneeAvg - repKneeAtStart);
+      if(repMaxKneeTravel === null || travel > repMaxKneeTravel) repMaxKneeTravel = travel;
+    }
+    switch(deadliftState){
+      case 'standing':
+        if(hipAvg < DEADLIFT_THRESH.hipStanding - DEADLIFT_THRESH.hysteresis) deadliftState = 'lowering';
+        break;
+      case 'lowering':
+        if(hipAvg <= DEADLIFT_THRESH.hipHinge) deadliftState = 'bottom';
+        break;
+      case 'bottom':
+        if(prevHipAvg !== null && hipAvg > prevHipAvg + 0.5) deadliftState = 'lifting';
+        break;
+      case 'lifting':
+        if(hipAvg >= DEADLIFT_THRESH.hipStanding){
+          deadliftState = 'standing';
+          if(recording) finalizeDeadliftRep();
+          repKneeAtStart = kneeAvg;
+        } else if(prevHipAvg !== null && hipAvg < prevHipAvg - 0.5){
+          deadliftState = 'bottom';
+        }
+        break;
+    }
+    prevHipAvg = hipAvg;
+  }
+
+  function finalizeDeadliftRep(){
+    deadliftRepCount++;
+    const backDelta = (neutralBackAngle !== null && repBackAngleAtHinge !== null)
+      ? repBackAngleAtHinge - neutralBackAngle : null;
+    const roundWarn = backDelta !== null && Math.abs(backDelta) > THRESH.backRounding;
+    const kneeWarn = repMaxKneeTravel !== null && repMaxKneeTravel > THRESH.kneeTravel;
+    deadliftReps.push({n: deadliftRepCount, hipMin: repMinHipAvg, backDelta, kneeTravel: repMaxKneeTravel});
+    document.getElementById('deadliftRepCount').textContent = String(deadliftRepCount);
+    const summary = `髖${fmt(repMinHipAvg)}° · 背Δ${backDelta===null?'--':fmt(backDelta)+'°'} · 膝幅${repMaxKneeTravel===null?'--':fmt(repMaxKneeTravel)+'°'}`;
+    document.getElementById('deadliftLastRep').textContent = `#${deadliftRepCount} ${summary}`;
+    const log = document.getElementById('deadliftRepLog');
+    const item = document.createElement('div');
+    item.className = 'rep-log-item' + ((roundWarn || kneeWarn) ? ' warn' : '');
+    item.innerHTML = `<span>第 ${deadliftRepCount} 下</span><span>${summary}</span>`;
+    log.prepend(item);
+    repMinHipAvg = null; repBackAngleAtHinge = null; repMaxKneeTravel = null;
+  }
+
+  document.getElementById('btn-calibrate').addEventListener('click', () => {
+    if(lastBackAngle !== null){
+      neutralBackAngle = lastBackAngle;
+      const btn = document.getElementById('btn-calibrate');
+      const orig = btn.textContent;
+      btn.textContent = '已校準 ✓';
+      setTimeout(() => { btn.textContent = orig; }, 1000);
+    }
+  });
 
   // ---------- Drawer state (3-way: collapsed / half / full) ----------
   const DRAWER_STATES = ['collapsed','half','full'];
@@ -437,12 +759,50 @@
   });
 
   // ---------- Mode bar ----------
-  document.querySelectorAll('.mode-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-      btn.classList.add('active');
+  function updateCameraHint(){
+    let hint = '';
+    if(currentMode === 'squat') hint = MODE_HINTS.squat[squatView];
+    else if(currentMode === 'deadlift') hint = MODE_HINTS.deadlift;
+    if(hint){
+      cameraHint.innerHTML = `<span>${hint}</span>`;
+      cameraHint.classList.remove('hidden');
+    } else {
+      cameraHint.classList.add('hidden');
+    }
+  }
+
+  function setMode(mode){
+    currentMode = mode;
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === mode));
+
+    ROM_KEYS.forEach(key => {
+      cardEls[key].classList.toggle('hidden', !MODE_ANGLE_CARDS[mode].includes(key));
     });
+
+    sectionSquat.classList.toggle('hidden', mode !== 'squat');
+    sectionDeadlift.classList.toggle('hidden', mode !== 'deadlift');
+
+    updateCameraHint();
+
+    if(mode === 'squat') resetSquatRep();
+    if(mode === 'deadlift') resetDeadliftRep();
+  }
+
+  function setSquatView(view){
+    squatView = view;
+    document.querySelectorAll('#squat-view-toggle .view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+    squatSideMetrics.classList.toggle('hidden', view !== 'side');
+    squatFrontMetrics.classList.toggle('hidden', view !== 'front');
+    updateCameraHint();
+  }
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => setMode(btn.dataset.mode));
   });
+  document.querySelectorAll('#squat-view-toggle .view-btn').forEach(btn => {
+    btn.addEventListener('click', () => setSquatView(btn.dataset.view));
+  });
+  setMode('hip'); // initialize, matches default .active button
 
   // ---------- FPS ----------
   let lastFrameTime = performance.now();
@@ -525,8 +885,48 @@
     sumPelvis.textContent = pelvisTilt === null ? '--°' : `${fmt(pelvisTilt)}°`;
     sumShoulder.textContent = `${fmt(angles.shoulderL)}/${fmt(angles.shoulderR)}°`;
 
+    lastBackAngle = trunkLean;
+
+    // Squat / Deadlift mode-specific metrics
+    let valgusRatio = null;
+    if(currentMode === 'squat' || currentMode === 'deadlift'){
+      const kneeAvg = avgOf(angles.kneeL, angles.kneeR);
+      const hipAvg = avgOf(angles.hipL, angles.hipR);
+
+      if(currentMode === 'squat'){
+        let hipKneeDelta = null;
+        if(visible(LH,RH,LK,RK)){
+          hipKneeDelta = (LH.y+RH.y)/2 - (LK.y+RK.y)/2;
+        }
+        valgusRatio = computeKneeValgusRatio(LK, RK, LA, RA);
+        document.getElementById('squatDepth').textContent = classifySquatDepth(hipKneeDelta);
+        document.getElementById('squatDepthDelta').textContent = `Hip-Knee Δ: ${hipKneeDelta===null?'--':fmt(hipKneeDelta,3)}`;
+        const valgusEl = document.getElementById('kneeValgusRatio');
+        valgusEl.textContent = valgusRatio === null ? '--' : fmt(valgusRatio, 2);
+        valgusEl.classList.toggle('warn', valgusRatio !== null && valgusRatio < THRESH.kneeValgusRatio);
+        valgusEl.classList.toggle('ok', valgusRatio !== null && valgusRatio >= THRESH.kneeValgusRatio);
+
+        updateSquatRep(kneeAvg, hipKneeDelta, trunkLean, recording);
+      }
+
+      if(currentMode === 'deadlift'){
+        document.getElementById('hingeAngle').innerHTML = hipAvg===null ? '--<small>°</small>' : `${fmt(hipAvg)}<small>°</small>`;
+        document.getElementById('backAngle').innerHTML = trunkLean===null ? '--<small>°</small>' : `${fmt(trunkLean)}<small>°</small>`;
+        const backDeltaNow = (neutralBackAngle!==null && trunkLean!==null) ? trunkLean-neutralBackAngle : null;
+        document.getElementById('backAngleDelta').textContent = `vs neutral: ${backDeltaNow===null?'--':fmt(backDeltaNow)+'°'}`;
+
+        updateDeadliftRep(hipAvg, kneeAvg, trunkLean, recording);
+      }
+    }
+
     // Compensation alerts
-    updateAlerts(angles, pelvisTilt, shoulderTilt, trunkLean);
+    updateAlerts(angles, pelvisTilt, shoulderTilt, trunkLean, {
+      mode: currentMode,
+      squatView,
+      kneeValgusRatio: valgusRatio,
+      backAngleDelta: currentMode==='deadlift' && neutralBackAngle!==null && trunkLean!==null ? trunkLean-neutralBackAngle : null,
+      kneeTravel: currentMode==='deadlift' ? repMaxKneeTravel : null,
+    });
   }
 
   function setAlignValue(key, val, threshold){
@@ -540,7 +940,7 @@
     el.classList.add(Math.abs(val) > threshold ? 'warn' : 'ok');
   }
 
-  function updateAlerts(angles, pelvisTilt, shoulderTilt, trunkLean){
+  function updateAlerts(angles, pelvisTilt, shoulderTilt, trunkLean, extra = {}){
     const alerts = [];
     if(pelvisTilt !== null && Math.abs(pelvisTilt) > THRESH.pelvisTilt){
       alerts.push(`骨盆側傾 Pelvic Shift（${fmt(pelvisTilt)}°）`);
@@ -548,7 +948,8 @@
     if(shoulderTilt !== null && Math.abs(shoulderTilt) > THRESH.shoulderTilt){
       alerts.push(`肩胛代償 / 軀幹側彎（${fmt(shoulderTilt)}°）`);
     }
-    if(trunkLean !== null && Math.abs(trunkLean) > THRESH.trunkLean){
+    if(extra.mode !== 'squat' && extra.mode !== 'deadlift'
+       && trunkLean !== null && Math.abs(trunkLean) > THRESH.trunkLean){
       alerts.push(`軀幹前傾代償（${fmt(trunkLean)}°）`);
     }
     [['hipL','hipR','髖 Hip'],['kneeL','kneeR','膝 Knee'],['shoulderL','shoulderR','肩 Shoulder']].forEach(([l,r,name]) => {
@@ -557,6 +958,20 @@
         alerts.push(`${name} 左右不對稱（差 ${fmt(Math.abs(a-b))}°）`);
       }
     });
+
+    if(extra.mode === 'squat' && extra.squatView === 'front'
+       && extra.kneeValgusRatio !== null && extra.kneeValgusRatio !== undefined
+       && extra.kneeValgusRatio < THRESH.kneeValgusRatio){
+      alerts.push(`膝內扣 Knee Valgus（比值 ${fmt(extra.kneeValgusRatio,2)}）`);
+    }
+    if(extra.backAngleDelta !== null && extra.backAngleDelta !== undefined
+       && Math.abs(extra.backAngleDelta) > THRESH.backRounding){
+      alerts.push(`背部角度偏離中立 Back Angle Deviation（${fmt(extra.backAngleDelta)}°）`);
+    }
+    if(extra.kneeTravel !== null && extra.kneeTravel !== undefined
+       && extra.kneeTravel > THRESH.kneeTravel){
+      alerts.push(`膝關節過度移動 Excessive Knee Travel（${fmt(extra.kneeTravel)}°）`);
+    }
 
     if(alerts.length === 0){
       alertsEl.innerHTML = '<div class="alert-empty">未偵測到代償</div>';
