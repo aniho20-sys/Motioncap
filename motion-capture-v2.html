@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Movement Decoded — Motion Capture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --color-primary:#FF5C00;
+    --color-bg:#0A0A0A;
+    --color-surface:#161616;
+    --color-surface-2:#222222;
+    --color-text:#FFFFFF;
+    --color-text-dim:#9A9A9A;
+    --color-border:#2C2C2C;
+    --color-warn:#FFC400;
+    --color-danger:#FF3B30;
+    --color-ok:#34C759;
+    --font-ui:'Inter',sans-serif;
+    --font-data:'DM Mono',monospace;
+    --drawer-h:85vh;
+    --drawer-collapsed:72px;
+    --drawer-half:46vh;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    font-family:var(--font-ui);
+    background:var(--color-bg);
+    color:var(--color-text);
+    overflow:hidden;
+    -webkit-user-select:none; user-select:none;
+  }
+  #app{position:fixed; inset:0; overflow:hidden;}
+
+  /* ---------- Camera / Canvas ---------- */
+  #video{display:none;}
+  #canvas{
+    position:absolute; inset:0;
+    width:100%; height:100%;
+    object-fit:cover;
+    background:#000;
+  }
+  #start-overlay{
+    position:absolute; inset:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:18px;
+    background:radial-gradient(circle at 50% 35%, #1a1a1a 0%, #0A0A0A 70%);
+    z-index:50;
+    text-align:center; padding:24px;
+  }
+  #start-overlay .logo{
+    font-weight:800; font-size:28px; letter-spacing:1px;
+  }
+  #start-overlay .logo span{color:var(--color-primary);}
+  #start-overlay p{color:var(--color-text-dim); font-size:14px; max-width:320px; line-height:1.6;}
+  #start-btn{
+    background:var(--color-primary);
+    color:#fff; border:none; border-radius:999px;
+    padding:16px 40px; font-size:16px; font-weight:700;
+    font-family:var(--font-ui);
+    cursor:pointer;
+  }
+  #start-btn:active{opacity:.8;}
+  #error-msg{color:var(--color-danger); font-size:13px; margin-top:6px; max-width:320px;}
+
+  /* ---------- Top Bar ---------- */
+  #topbar{
+    position:absolute; top:0; left:0; right:0;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:max(14px, env(safe-area-inset-top)) 18px 14px;
+    background:linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,0));
+    z-index:20; pointer-events:none;
+  }
+  #topbar .brand{font-weight:800; font-size:16px; letter-spacing:.5px;}
+  #topbar .brand span{color:var(--color-primary);}
+  #topbar .status{
+    display:flex; align-items:center; gap:6px;
+    font-family:var(--font-data); font-size:12px; color:var(--color-text-dim);
+    background:rgba(0,0,0,.4); border-radius:999px; padding:6px 12px;
+  }
+  #topbar .dot{width:8px; height:8px; border-radius:50%; background:var(--color-danger); animation:pulse 1.4s infinite;}
+  #topbar .dot.tracking{background:var(--color-ok); animation:none;}
+  @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.25;}}
+
+  /* ---------- Mode bar ---------- */
+  #modebar{
+    position:absolute; top:64px; left:0; right:0;
+    display:flex; gap:8px; justify-content:center;
+    padding:0 16px; z-index:20;
+    pointer-events:auto;
+  }
+  .mode-btn{
+    font-family:var(--font-ui); font-size:12px; font-weight:600;
+    color:var(--color-text); background:rgba(20,20,20,.6);
+    border:1px solid var(--color-border); border-radius:999px;
+    padding:8px 16px; cursor:pointer; backdrop-filter:blur(6px);
+  }
+  .mode-btn.active{background:var(--color-primary); border-color:var(--color-primary); color:#fff;}
+
+  /* ---------- Drawer ---------- */
+  #drawer{
+    position:absolute; left:0; right:0; bottom:0;
+    height:var(--drawer-h);
+    background:var(--color-surface);
+    border-top-left-radius:24px; border-top-right-radius:24px;
+    border-top:1px solid var(--color-border);
+    box-shadow:0 -8px 30px rgba(0,0,0,.5);
+    transform:translateY(calc(var(--drawer-h) - var(--drawer-collapsed)));
+    transition:transform .32s cubic-bezier(.25,.8,.25,1);
+    z-index:30;
+    display:flex; flex-direction:column;
+    touch-action:none;
+  }
+  #drawer.half{transform:translateY(calc(var(--drawer-h) - var(--drawer-half)));}
+  #drawer.full{transform:translateY(0);}
+
+  #drawer-handle{
+    flex-shrink:0; padding:12px 0 8px;
+    display:flex; flex-direction:column; align-items:center; gap:10px;
+    cursor:grab;
+  }
+  #drawer-handle .bar{width:40px; height:4px; border-radius:2px; background:var(--color-border);}
+  #drawer-summary{
+    width:100%; display:flex; justify-content:space-around;
+    font-family:var(--font-data); font-size:13px; color:var(--color-text-dim);
+    padding:0 16px;
+  }
+  #drawer-summary b{color:var(--color-text); font-size:15px; display:block;}
+  #drawer-summary .label{font-size:10px; letter-spacing:.5px; text-transform:uppercase;}
+
+  #drawer-content{
+    flex:1; overflow-y:auto; padding:8px 18px 32px;
+    -webkit-overflow-scrolling:touch;
+  }
+  #drawer-content::-webkit-scrollbar{width:0;}
+
+  .section-title{
+    font-size:12px; font-weight:700; letter-spacing:1px; text-transform:uppercase;
+    color:var(--color-text-dim); margin:18px 0 10px;
+  }
+  .section-title:first-child{margin-top:6px;}
+
+  .angle-grid{
+    display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  .angle-card{
+    background:var(--color-surface-2); border-radius:14px; padding:12px 14px;
+    border:1px solid var(--color-border);
+  }
+  .angle-card .name{font-size:12px; color:var(--color-text-dim); margin-bottom:4px;}
+  .angle-card .value{font-family:var(--font-data); font-size:26px; font-weight:500; color:var(--color-primary);}
+  .angle-card .value small{font-size:14px; color:var(--color-text-dim);}
+  .angle-card .rom{font-family:var(--font-data); font-size:11px; color:var(--color-text-dim); margin-top:4px;}
+
+  .align-row{
+    display:flex; align-items:center; justify-content:space-between;
+    background:var(--color-surface-2); border-radius:14px;
+    padding:12px 14px; margin-bottom:10px; border:1px solid var(--color-border);
+  }
+  .align-row .name{font-size:13px;}
+  .align-row .value{font-family:var(--font-data); font-size:18px;}
+  .align-row .value.warn{color:var(--color-warn);}
+  .align-row .value.danger{color:var(--color-danger);}
+  .align-row .value.ok{color:var(--color-ok);}
+
+  #alerts{display:flex; flex-direction:column; gap:8px;}
+  .alert-item{
+    background:rgba(255,196,0,.1); border:1px solid var(--color-warn);
+    color:var(--color-warn); border-radius:10px; padding:10px 12px;
+    font-size:12px; display:flex; align-items:center; gap:8px;
+  }
+  .alert-empty{
+    color:var(--color-ok); font-size:12px; background:rgba(52,199,89,.1);
+    border:1px solid var(--color-ok); border-radius:10px; padding:10px 12px;
+  }
+
+  #record-controls{display:flex; gap:10px; margin-top:18px;}
+  .btn{
+    flex:1; font-family:var(--font-ui); font-weight:700; font-size:14px;
+    border-radius:12px; padding:14px; border:none; cursor:pointer;
+  }
+  .btn-primary{background:var(--color-primary); color:#fff;}
+  .btn-secondary{background:var(--color-surface-2); color:var(--color-text); border:1px solid var(--color-border);}
+  .btn:active{opacity:.8;}
+  .btn[disabled]{opacity:.4; cursor:default;}
+
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <video id="video" playsinline></video>
+  <canvas id="canvas"></canvas>
+
+  <div id="topbar">
+    <div class="brand">Movement <span>Decoded</span></div>
+    <div class="status">
+      <span class="dot" id="status-dot"></span>
+      <span id="status-text">未連接</span>
+      <span id="fps">·</span>
+    </div>
+  </div>
+
+  <div id="modebar">
+    <button class="mode-btn active" data-mode="hip">髖 Hip</button>
+    <button class="mode-btn" data-mode="shoulder">肩 Shoulder</button>
+    <button class="mode-btn" data-mode="full">全身 Full</button>
+  </div>
+
+  <div id="drawer">
+    <div id="drawer-handle">
+      <div class="bar"></div>
+      <div id="drawer-summary">
+        <div><b id="sum-hip">--°</b><span class="label">Hip L/R</span></div>
+        <div><b id="sum-pelvis">--°</b><span class="label">Pelvis Tilt</span></div>
+        <div><b id="sum-shoulder">--°</b><span class="label">Shoulder L/R</span></div>
+      </div>
+    </div>
+    <div id="drawer-content">
+      <div class="section-title">關節角度 Joint Angles</div>
+      <div class="angle-grid">
+        <div class="angle-card">
+          <div class="name">髖屈曲 Hip L</div>
+          <div class="value" id="hipL">--<small>°</small></div>
+          <div class="rom" id="hipL-rom">ROM: --</div>
+        </div>
+        <div class="angle-card">
+          <div class="name">髖屈曲 Hip R</div>
+          <div class="value" id="hipR">--<small>°</small></div>
+          <div class="rom" id="hipR-rom">ROM: --</div>
+        </div>
+        <div class="angle-card">
+          <div class="name">膝屈曲 Knee L</div>
+          <div class="value" id="kneeL">--<small>°</small></div>
+          <div class="rom" id="kneeL-rom">ROM: --</div>
+        </div>
+        <div class="angle-card">
+          <div class="name">膝屈曲 Knee R</div>
+          <div class="value" id="kneeR">--<small>°</small></div>
+          <div class="rom" id="kneeR-rom">ROM: --</div>
+        </div>
+        <div class="angle-card">
+          <div class="name">肩屈曲 Shoulder L</div>
+          <div class="value" id="shoulderL">--<small>°</small></div>
+          <div class="rom" id="shoulderL-rom">ROM: --</div>
+        </div>
+        <div class="angle-card">
+          <div class="name">肩屈曲 Shoulder R</div>
+          <div class="value" id="shoulderR">--<small>°</small></div>
+          <div class="rom" id="shoulderR-rom">ROM: --</div>
+        </div>
+      </div>
+
+      <div class="section-title">排列指標 Alignment</div>
+      <div class="align-row">
+        <div class="name">骨盆傾斜 Pelvis Tilt</div>
+        <div class="value" id="pelvisTilt">--°</div>
+      </div>
+      <div class="align-row">
+        <div class="name">肩膀水平 Shoulder Level</div>
+        <div class="value" id="shoulderTilt">--°</div>
+      </div>
+      <div class="align-row">
+        <div class="name">軀幹前傾 Trunk Lean</div>
+        <div class="value" id="trunkLean">--°</div>
+      </div>
+
+      <div class="section-title">代償偵測 Compensation Alerts</div>
+      <div id="alerts"><div class="alert-empty">未偵測到代償</div></div>
+
+      <div id="record-controls">
+        <button class="btn btn-primary" id="btn-record">開始評估 Start</button>
+        <button class="btn btn-secondary" id="btn-reset">重設 Reset</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="start-overlay">
+    <div class="logo">Movement <span>Decoded</span></div>
+    <p>FRC Motion Analyser — 用鏡頭即時量化關節活動角度（CARS / PAILs / RAILs）。請允許相機權限以開始。</p>
+    <button id="start-btn">開啟相機 Start Camera</button>
+    <div id="error-msg"></div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/pose/pose.js" crossorigin="anonymous"></script>
+<script>
+(function(){
+  'use strict';
+
+  // ---------- Landmark indices (MediaPipe Pose) ----------
+  const LM = {
+    NOSE:0,
+    LEFT_SHOULDER:11, RIGHT_SHOULDER:12,
+    LEFT_ELBOW:13,    RIGHT_ELBOW:14,
+    LEFT_WRIST:15,    RIGHT_WRIST:16,
+    LEFT_HIP:23,      RIGHT_HIP:24,
+    LEFT_KNEE:25,     RIGHT_KNEE:26,
+    LEFT_ANKLE:27,    RIGHT_ANKLE:28,
+  };
+  const VIS_THRESHOLD = 0.5;
+
+  // ---------- Geometry helpers ----------
+  function angle3(a, b, c){
+    const ab = {x:a.x-b.x, y:a.y-b.y};
+    const cb = {x:c.x-b.x, y:c.y-b.y};
+    const dot = ab.x*cb.x + ab.y*cb.y;
+    const magAB = Math.hypot(ab.x, ab.y);
+    const magCB = Math.hypot(cb.x, cb.y);
+    if(magAB === 0 || magCB === 0) return null;
+    let cos = dot/(magAB*magCB);
+    cos = Math.min(1, Math.max(-1, cos));
+    return Math.acos(cos) * 180 / Math.PI;
+  }
+  function tiltAngle(a, b){
+    return Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+  }
+  function visible(...pts){
+    return pts.every(p => p && (p.visibility === undefined || p.visibility >= VIS_THRESHOLD));
+  }
+  function fmt(v, digits=0){
+    return v === null || v === undefined || Number.isNaN(v) ? '--' : v.toFixed(digits);
+  }
+
+  // ---------- DOM refs ----------
+  const videoEl = document.getElementById('video');
+  const canvasEl = document.getElementById('canvas');
+  const ctx = canvasEl.getContext('2d');
+  const startOverlay = document.getElementById('start-overlay');
+  const startBtn = document.getElementById('start-btn');
+  const errorMsg = document.getElementById('error-msg');
+  const statusDot = document.getElementById('status-dot');
+  const statusText = document.getElementById('status-text');
+  const fpsEl = document.getElementById('fps');
+  const drawer = document.getElementById('drawer');
+  const drawerHandle = document.getElementById('drawer-handle');
+  const recordBtn = document.getElementById('btn-record');
+  const resetBtn = document.getElementById('btn-reset');
+
+  const valueEls = {
+    hipL: document.getElementById('hipL'), hipR: document.getElementById('hipR'),
+    kneeL: document.getElementById('kneeL'), kneeR: document.getElementById('kneeR'),
+    shoulderL: document.getElementById('shoulderL'), shoulderR: document.getElementById('shoulderR'),
+    pelvisTilt: document.getElementById('pelvisTilt'),
+    shoulderTilt: document.getElementById('shoulderTilt'),
+    trunkLean: document.getElementById('trunkLean'),
+  };
+  const romEls = {
+    hipL: document.getElementById('hipL-rom'), hipR: document.getElementById('hipR-rom'),
+    kneeL: document.getElementById('kneeL-rom'), kneeR: document.getElementById('kneeR-rom'),
+    shoulderL: document.getElementById('shoulderL-rom'), shoulderR: document.getElementById('shoulderR-rom'),
+  };
+  const sumHip = document.getElementById('sum-hip');
+  const sumPelvis = document.getElementById('sum-pelvis');
+  const sumShoulder = document.getElementById('sum-shoulder');
+  const alertsEl = document.getElementById('alerts');
+
+  // ---------- Compensation thresholds (angle-based proxy) ----------
+  const THRESH = {
+    pelvisTilt: 4,    // ° — proxy for >3cm hip height difference
+    shoulderTilt: 4,  // ° — shoulder elevation / trunk side-bend
+    trunkLean: 10,    // ° — forward trunk lean from vertical
+    asymmetry: 15,    // ° — left/right joint angle asymmetry
+  };
+
+  // ---------- Recording / ROM tracking ----------
+  let recording = false;
+  const ROM_KEYS = ['hipL','hipR','kneeL','kneeR','shoulderL','shoulderR'];
+  let romData = {};
+  function resetRom(){
+    romData = {};
+    ROM_KEYS.forEach(k => romData[k] = {min: Infinity, max: -Infinity});
+    ROM_KEYS.forEach(k => romEls[k].textContent = 'ROM: --');
+  }
+  resetRom();
+
+  recordBtn.addEventListener('click', () => {
+    recording = !recording;
+    if(recording){
+      resetRom();
+      recordBtn.textContent = '停止評估 Stop';
+      recordBtn.classList.remove('btn-primary');
+      recordBtn.classList.add('btn-secondary');
+    } else {
+      recordBtn.textContent = '開始評估 Start';
+      recordBtn.classList.add('btn-primary');
+      recordBtn.classList.remove('btn-secondary');
+    }
+  });
+  resetBtn.addEventListener('click', () => {
+    recording = false;
+    recordBtn.textContent = '開始評估 Start';
+    recordBtn.classList.add('btn-primary');
+    recordBtn.classList.remove('btn-secondary');
+    resetRom();
+  });
+
+  function trackRom(key, val){
+    if(val === null) return;
+    const r = romData[key];
+    if(val < r.min) r.min = val;
+    if(val > r.max) r.max = val;
+    romEls[key].textContent = `ROM: ${fmt(r.min)}° – ${fmt(r.max)}°`;
+  }
+
+  // ---------- Drawer state (3-way: collapsed / half / full) ----------
+  const DRAWER_STATES = ['collapsed','half','full'];
+  let drawerState = 'collapsed';
+  function setDrawerState(state){
+    drawerState = state;
+    drawer.classList.remove('half','full');
+    if(state === 'half') drawer.classList.add('half');
+    if(state === 'full') drawer.classList.add('full');
+  }
+  let dragStartY = null;
+  let dragStartState = null;
+  drawerHandle.addEventListener('pointerdown', (e) => {
+    dragStartY = e.clientY;
+    dragStartState = drawerState;
+    drawerHandle.setPointerCapture(e.pointerId);
+  });
+  drawerHandle.addEventListener('pointerup', (e) => {
+    if(dragStartY === null) return;
+    const dy = e.clientY - dragStartY;
+    let idx = DRAWER_STATES.indexOf(dragStartState);
+    if(dy < -30) idx = Math.min(DRAWER_STATES.length-1, idx+1); // dragged up -> expand
+    else if(dy > 30) idx = Math.max(0, idx-1);                  // dragged down -> collapse
+    else idx = (idx+1) % DRAWER_STATES.length;                  // tap -> cycle
+    setDrawerState(DRAWER_STATES[idx]);
+    dragStartY = null;
+  });
+
+  // ---------- Mode bar ----------
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // ---------- FPS ----------
+  let lastFrameTime = performance.now();
+  let fps = 0;
+
+  // ---------- Pose results handler ----------
+  function onResults(results){
+    const now = performance.now();
+    fps = 1000 / (now - lastFrameTime);
+    lastFrameTime = now;
+    fpsEl.textContent = `${fps.toFixed(0)} fps`;
+
+    canvasEl.width = results.image.width;
+    canvasEl.height = results.image.height;
+
+    ctx.save();
+    ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
+    // Mirror for selfie view
+    ctx.translate(canvasEl.width, 0);
+    ctx.scale(-1, 1);
+    ctx.drawImage(results.image, 0, 0, canvasEl.width, canvasEl.height);
+
+    if(results.poseLandmarks){
+      statusDot.classList.add('tracking');
+      statusText.textContent = '追蹤中';
+
+      window.drawConnectors(ctx, results.poseLandmarks, window.POSE_CONNECTIONS,
+        {color:'#FF5C00', lineWidth:3});
+      window.drawLandmarks(ctx, results.poseLandmarks,
+        {color:'#FFFFFF', fillColor:'#FF5C00', lineWidth:1, radius:4});
+
+      computeMetrics(results.poseLandmarks);
+    } else {
+      statusDot.classList.remove('tracking');
+      statusText.textContent = '未偵測到人體';
+    }
+    ctx.restore();
+  }
+
+  // ---------- Metric computation ----------
+  function computeMetrics(lm){
+    const LS = lm[LM.LEFT_SHOULDER], RS = lm[LM.RIGHT_SHOULDER];
+    const LE = lm[LM.LEFT_ELBOW],    RE = lm[LM.RIGHT_ELBOW];
+    const LH = lm[LM.LEFT_HIP],      RH = lm[LM.RIGHT_HIP];
+    const LK = lm[LM.LEFT_KNEE],     RK = lm[LM.RIGHT_KNEE];
+    const LA = lm[LM.LEFT_ANKLE],    RA = lm[LM.RIGHT_ANKLE];
+
+    const angles = {};
+
+    angles.hipL = visible(LS,LH,LK) ? angle3(LS,LH,LK) : null;
+    angles.hipR = visible(RS,RH,RK) ? angle3(RS,RH,RK) : null;
+    angles.kneeL = visible(LH,LK,LA) ? angle3(LH,LK,LA) : null;
+    angles.kneeR = visible(RH,RK,RA) ? angle3(RH,RK,RA) : null;
+    angles.shoulderL = visible(LH,LS,LE) ? angle3(LH,LS,LE) : null;
+    angles.shoulderR = visible(RH,RS,RE) ? angle3(RH,RS,RE) : null;
+
+    let pelvisTilt = null, shoulderTilt = null, trunkLean = null;
+    if(visible(LH,RH)) pelvisTilt = tiltAngle(LH,RH);
+    if(visible(LS,RS)) shoulderTilt = tiltAngle(LS,RS);
+    if(visible(LH,RH,LS,RS)){
+      const midHip = {x:(LH.x+RH.x)/2, y:(LH.y+RH.y)/2};
+      const midShoulder = {x:(LS.x+RS.x)/2, y:(LS.y+RS.y)/2};
+      trunkLean = Math.atan2(midHip.x - midShoulder.x, midHip.y - midShoulder.y) * 180 / Math.PI;
+    }
+
+    // Update angle cards + ROM
+    ROM_KEYS.forEach(key => {
+      const v = angles[key];
+      valueEls[key].innerHTML = (v === null) ? '--<small>°</small>' : `${fmt(v)}<small>°</small>`;
+      if(recording) trackRom(key, v);
+    });
+
+    // Update alignment rows
+    setAlignValue('pelvisTilt', pelvisTilt, THRESH.pelvisTilt);
+    setAlignValue('shoulderTilt', shoulderTilt, THRESH.shoulderTilt);
+    setAlignValue('trunkLean', trunkLean, THRESH.trunkLean);
+
+    // Update drawer summary
+    sumHip.textContent = `${fmt(angles.hipL)}/${fmt(angles.hipR)}°`;
+    sumPelvis.textContent = pelvisTilt === null ? '--°' : `${fmt(pelvisTilt)}°`;
+    sumShoulder.textContent = `${fmt(angles.shoulderL)}/${fmt(angles.shoulderR)}°`;
+
+    // Compensation alerts
+    updateAlerts(angles, pelvisTilt, shoulderTilt, trunkLean);
+  }
+
+  function setAlignValue(key, val, threshold){
+    const el = valueEls[key];
+    el.classList.remove('warn','danger','ok');
+    if(val === null){
+      el.textContent = '--°';
+      return;
+    }
+    el.textContent = `${val >= 0 ? '+' : ''}${fmt(val)}°`;
+    el.classList.add(Math.abs(val) > threshold ? 'warn' : 'ok');
+  }
+
+  function updateAlerts(angles, pelvisTilt, shoulderTilt, trunkLean){
+    const alerts = [];
+    if(pelvisTilt !== null && Math.abs(pelvisTilt) > THRESH.pelvisTilt){
+      alerts.push(`骨盆側傾 Pelvic Shift（${fmt(pelvisTilt)}°）`);
+    }
+    if(shoulderTilt !== null && Math.abs(shoulderTilt) > THRESH.shoulderTilt){
+      alerts.push(`肩胛代償 / 軀幹側彎（${fmt(shoulderTilt)}°）`);
+    }
+    if(trunkLean !== null && Math.abs(trunkLean) > THRESH.trunkLean){
+      alerts.push(`軀幹前傾代償（${fmt(trunkLean)}°）`);
+    }
+    [['hipL','hipR','髖 Hip'],['kneeL','kneeR','膝 Knee'],['shoulderL','shoulderR','肩 Shoulder']].forEach(([l,r,name]) => {
+      const a = angles[l], b = angles[r];
+      if(a !== null && b !== null && Math.abs(a-b) > THRESH.asymmetry){
+        alerts.push(`${name} 左右不對稱（差 ${fmt(Math.abs(a-b))}°）`);
+      }
+    });
+
+    if(alerts.length === 0){
+      alertsEl.innerHTML = '<div class="alert-empty">未偵測到代償</div>';
+    } else {
+      alertsEl.innerHTML = alerts.map(a => `<div class="alert-item">⚠ ${a}</div>`).join('');
+    }
+  }
+
+  // ---------- MediaPipe Pose setup ----------
+  const pose = new window.Pose({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/pose/${file}`
+  });
+  pose.setOptions({
+    modelComplexity: 1,
+    smoothLandmarks: true,
+    enableSegmentation: false,
+    minDetectionConfidence: 0.5,
+    minTrackingConfidence: 0.5
+  });
+  pose.onResults(onResults);
+
+  let camera = null;
+
+  startBtn.addEventListener('click', async () => {
+    startBtn.disabled = true;
+    startBtn.textContent = '啟動中...';
+    errorMsg.textContent = '';
+    try{
+      camera = new window.Camera(videoEl, {
+        onFrame: async () => { await pose.send({image: videoEl}); },
+        width: 1280,
+        height: 720,
+        facingMode: 'user'
+      });
+      await camera.start();
+      startOverlay.classList.add('hidden');
+      statusText.textContent = '相機已連接';
+    } catch(err){
+      console.error(err);
+      startBtn.disabled = false;
+      startBtn.textContent = '開啟相機 Start Camera';
+      errorMsg.textContent = '無法存取相機：' + (err && err.message ? err.message : '請檢查權限或使用 HTTPS / localhost。');
+    }
+  });
+})();
+</script>
+</body>
+</html>
