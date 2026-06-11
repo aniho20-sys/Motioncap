@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 
 import '../cv/angle_calculator.dart';
+import '../models/capture_mode.dart';
 import '../models/compensation.dart';
 import '../models/pose_landmark.dart';
 import '../theme/tokens.dart';
@@ -61,11 +62,24 @@ class AngleTagOverlay extends StatelessWidget {
     required this.frame,
     required this.angles,
     this.mirror = true,
+    this.mode = CaptureMode.hip,
+    this.squatView = SquatView.side,
+    this.backAngleDelta,
+    this.kneeTravel,
   });
 
   final PoseFrame frame;
   final PoseAngles angles;
   final bool mirror;
+
+  /// Active capture mode — gates which [detectCompensation] alerts surface
+  /// as floating tags (e.g. trunk-lean suppression in squat/deadlift).
+  final CaptureMode mode;
+  final SquatView squatView;
+
+  /// Pre-computed deadlift readings — see [detectCompensation].
+  final double? backAngleDelta;
+  final double? kneeTravel;
 
   @override
   Widget build(BuildContext context) {
@@ -110,7 +124,13 @@ class AngleTagOverlay extends StatelessWidget {
             angles.shoulderR,
           );
 
-          final alerts = detectCompensation(angles);
+          final alerts = detectCompensation(
+            angles,
+            mode: mode,
+            squatView: squatView,
+            backAngleDelta: backAngleDelta,
+            kneeTravel: kneeTravel,
+          );
           for (var i = 0; i < alerts.length; i++) {
             final alert = alerts[i];
             tags.add(

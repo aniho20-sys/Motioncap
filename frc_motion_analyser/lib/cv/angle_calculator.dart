@@ -49,6 +49,8 @@ class PoseAngles {
     this.pelvisTilt,
     this.shoulderTilt,
     this.trunkLean,
+    this.hipKneeDeltaY,
+    this.kneeValgusRatio,
   });
 
   static const empty = PoseAngles();
@@ -74,6 +76,18 @@ class PoseAngles {
   /// 軀幹前傾, in degrees — angle of the mid-hip→mid-shoulder line from
   /// vertical.
   final double? trunkLean;
+
+  /// Normalized hip-Y minus knee-Y — 深蹲深度 proxy
+  /// (motion-capture-v2.html `hipKneeDelta`). Positive means hips are
+  /// above knees (shallow); ≤0 means hips have dropped to/below knee
+  /// height.
+  final double? hipKneeDeltaY;
+
+  /// `|kneeL.x - kneeR.x| / |ankleL.x - ankleR.x|` — front-view knee
+  /// tracking ratio (motion-capture-v2.html `computeKneeValgusRatio`).
+  /// Values below `CompensationThresholds.kneeValgusRatio` indicate the
+  /// knees are caving in relative to the ankles.
+  final double? kneeValgusRatio;
 }
 
 /// Computes [PoseAngles] from a [PoseFrame] — CLAUDE.md 主要計算.
@@ -111,6 +125,19 @@ PoseAngles computeAngles(PoseFrame frame) {
         math.pi;
   }
 
+  double? hipKneeDeltaY;
+  if (_visible([lh, rh, lk, rk])) {
+    hipKneeDeltaY = (lh.y + rh.y) / 2 - (lk.y + rk.y) / 2;
+  }
+
+  double? kneeValgusRatio;
+  if (_visible([lk, rk, la, ra])) {
+    final ankleDist = (la.x - ra.x).abs();
+    if (ankleDist != 0) {
+      kneeValgusRatio = (lk.x - rk.x).abs() / ankleDist;
+    }
+  }
+
   return PoseAngles(
     hipL: _visible([ls, lh, lk]) ? angle3(ls, lh, lk) : null,
     hipR: _visible([rs, rh, rk]) ? angle3(rs, rh, rk) : null,
@@ -121,5 +148,7 @@ PoseAngles computeAngles(PoseFrame frame) {
     pelvisTilt: pelvisTilt,
     shoulderTilt: shoulderTilt,
     trunkLean: trunkLean,
+    hipKneeDeltaY: hipKneeDeltaY,
+    kneeValgusRatio: kneeValgusRatio,
   );
 }

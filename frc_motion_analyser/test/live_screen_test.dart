@@ -147,4 +147,75 @@ void main() {
 
     expect(find.text('RE-ACQUIRING'), findsOneWidget);
   });
+
+  testWidgets('squat mode shows the squat analysis section and rep counter', (tester) async {
+    final poseSource = _FakePoseSource();
+    addTearDown(poseSource.dispose);
+
+    await tester.pumpWidget(MaterialApp(home: LiveScreen(poseSource: poseSource)));
+    await tester.pump();
+
+    await tester.tap(find.text('深蹲 Squat'));
+    await tester.pump();
+
+    expect(find.text('深蹲分析 Squat Analysis'), findsOneWidget);
+    expect(find.text('次數 Reps'), findsOneWidget);
+    expect(find.text('蹲深 Depth'), findsOneWidget);
+  });
+
+  testWidgets('squat side/front toggle switches the displayed metric', (tester) async {
+    final poseSource = _FakePoseSource();
+    addTearDown(poseSource.dispose);
+
+    await tester.pumpWidget(MaterialApp(home: LiveScreen(poseSource: poseSource)));
+    await tester.pump();
+
+    await tester.tap(find.text('深蹲 Squat'));
+    await tester.pump();
+
+    expect(find.text('蹲深 Depth'), findsOneWidget);
+    expect(find.text('膝關節追蹤 Knee Tracking'), findsNothing);
+
+    await tester.tap(find.text('正面 Front'));
+    await tester.pump();
+
+    expect(find.text('膝關節追蹤 Knee Tracking'), findsOneWidget);
+    expect(find.text('蹲深 Depth'), findsNothing);
+  });
+
+  testWidgets('deadlift mode shows the deadlift analysis section and calibrate button', (tester) async {
+    final poseSource = _FakePoseSource();
+    addTearDown(poseSource.dispose);
+
+    await tester.pumpWidget(MaterialApp(home: LiveScreen(poseSource: poseSource)));
+    await tester.pump();
+
+    await tester.tap(find.text('硬舉 Deadlift'));
+    await tester.pump();
+
+    expect(find.text('硬舉分析 Deadlift Analysis'), findsOneWidget);
+    expect(find.text('校準中立姿勢 Calibrate Neutral'), findsOneWidget);
+    expect(find.text('髖鉸鏈 Hip Hinge'), findsOneWidget);
+  });
+
+  testWidgets('shows the camera framing hint for squat and deadlift modes', (tester) async {
+    final poseSource = _FakePoseSource();
+    addTearDown(poseSource.dispose);
+
+    await tester.pumpWidget(MaterialApp(home: LiveScreen(poseSource: poseSource)));
+    await tester.pump();
+
+    expect(
+      find.text('建議側面拍攝以分析深蹲深度與背部角度 — Side view recommended for depth & back angle'),
+      findsNothing,
+    );
+
+    await tester.tap(find.text('深蹲 Squat'));
+    await tester.pump();
+
+    expect(
+      find.text('建議側面拍攝以分析深蹲深度與背部角度 — Side view recommended for depth & back angle'),
+      findsOneWidget,
+    );
+  });
 }
