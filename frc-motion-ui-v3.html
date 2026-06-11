@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FRC Motion Analyser — UI Design v3</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0A0A;
+  --surface:#151515;
+  --surface-2:#1E1E1E;
+  --line:rgba(255,255,255,.08);
+  --orange:#FF5C00;
+  --orange-soft:rgba(255,92,0,.14);
+  --good:#4ADE80;
+  --warn:#FFB020;
+  --deficit:#FF3B5C;
+  --text:#F5F2EE;
+  --muted:#8A8580;
+  --mono:'DM Mono',monospace;
+  --disp:'Space Grotesk',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0D0C0B;color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased}
+
+/* ===== Gallery shell ===== */
+.shell{max-width:1400px;margin:0 auto;padding:48px 20px 80px}
+.shell-head{margin-bottom:40px}
+.brand-eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--orange);text-transform:uppercase}
+.shell-head h1{font-family:var(--disp);font-size:clamp(26px,4vw,40px);font-weight:700;margin:10px 0 8px;letter-spacing:-.01em}
+.shell-head p{color:var(--muted);font-size:14px;max-width:560px;line-height:1.7}
+
+/* tokens strip */
+.tokens{display:flex;flex-wrap:wrap;gap:10px;margin:28px 0 8px}
+.tok{display:flex;align-items:center;gap:8px;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:8px 12px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.sw{width:14px;height:14px;border-radius:4px}
+
+.screens{display:flex;flex-wrap:wrap;gap:36px;margin-top:40px;justify-content:center}
+.screen-wrap{width:375px}
+.screen-label{margin:0 4px 12px}
+.screen-label .num{font-family:var(--mono);font-size:11px;color:var(--orange);letter-spacing:.15em}
+.screen-label h2{font-family:var(--disp);font-size:17px;font-weight:600;margin:4px 0 4px}
+.screen-label p{font-size:12px;color:var(--muted);line-height:1.6}
+
+/* phone frame */
+.phone{width:375px;height:812px;background:var(--ink);border-radius:42px;border:1px solid rgba(255,255,255,.12);overflow:hidden;position:relative;box-shadow:0 30px 80px rgba(0,0,0,.6)}
+.statusbar{height:44px;display:flex;justify-content:space-between;align-items:center;padding:0 26px;font-family:var(--mono);font-size:12px;color:var(--text);position:relative;z-index:5}
+.homebar{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);width:130px;height:5px;border-radius:3px;background:rgba(255,255,255,.3);z-index:9}
+
+/* ===== shared components ===== */
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.chip{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;padding:5px 10px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.45);backdrop-filter:blur(8px)}
+.dot{width:6px;height:6px;border-radius:50%}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:16px}
+.btn-primary{background:var(--orange);color:#0A0A0A;font-weight:700;font-size:15px;border-radius:14px;padding:16px;text-align:center;letter-spacing:.01em}
+.tabbar{position:absolute;bottom:0;left:0;right:0;height:78px;background:rgba(10,10,10,.92);backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;padding-bottom:14px;z-index:8}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:10px;color:var(--muted)}
+.tab.active{color:var(--orange)}
+.tab svg{width:22px;height:22px}
+
+/* ===== Screen 1: Home ===== */
+.s-home{padding:8px 20px 0}
+.s-home .greet{margin:14px 0 2px;font-family:var(--disp);font-size:24px;font-weight:600}
+.s-home .date{font-family:var(--mono);font-size:12px;color:var(--muted)}
+.start-cta{margin-top:18px;background:linear-gradient(135deg,#FF5C00,#FF8A3D);border-radius:20px;padding:20px;color:#0A0A0A;position:relative;overflow:hidden}
+.start-cta::after{content:'';position:absolute;right:-30px;top:-30px;width:140px;height:140px;border:14px solid rgba(10,10,10,.12);border-radius:50%}
+.start-cta .t{font-family:var(--disp);font-size:19px;font-weight:700}
+.start-cta .s{font-size:12px;opacity:.75;margin-top:3px;font-weight:500}
+.start-cta .go{margin-top:16px;display:inline-flex;align-items:center;gap:8px;background:#0A0A0A;color:#fff;font-size:13px;font-weight:600;padding:10px 16px;border-radius:999px}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;margin:24px 0 12px}
+.sec-head h3{font-family:var(--disp);font-size:15px;font-weight:600}
+.sec-head a{font-family:var(--mono);font-size:11px;color:var(--orange)}
+.client-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.client-row:last-child{border-bottom:none}
+.avatar{width:42px;height:42px;border-radius:50%;background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:600;font-size:14px;color:var(--orange);border:1px solid var(--line)}
+.client-row .nm{font-size:14px;font-weight:600}
+.client-row .meta{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.mini-arc{margin-left:auto;text-align:right}
+.mini-arc .v{font-family:var(--mono);font-size:13px}
+.mini-arc .l{font-family:var(--mono);font-size:9px;color:var(--muted)}
+
+/* ===== Screen 2: Live camera ===== */
+.cam{position:absolute;inset:0;background:
+  radial-gradient(120% 90% at 50% 30%,#2B2622 0%,#171412 55%,#0A0A0A 100%)}
+.cam::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);background-size:34px 34px}
+.cam-vignette{position:absolute;inset:0;box-shadow:inset 0 0 140px rgba(0,0,0,.85)}
+.hud-top{position:absolute;top:54px;left:16px;right:16px;display:flex;justify-content:space-between;z-index:6}
+.rec .dot{background:var(--deficit);animation:blink 1.2s infinite}
+@keyframes blink{50%{opacity:.25}}
+.angle-tag{position:absolute;font-family:var(--mono);font-size:11px;color:#fff;background:rgba(10,10,10,.7);border:1px solid rgba(255,92,0,.5);padding:3px 8px;border-radius:7px;backdrop-filter:blur(4px);z-index:6}
+.drawer{position:absolute;left:0;right:0;bottom:0;background:rgba(14,14,14,.94);backdrop-filter:blur(16px);border-radius:26px 26px 0 0;border-top:1px solid var(--line);padding:10px 20px 28px;z-index:7}
+.grab{width:42px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 14px}
+.drawer-row{display:flex;align-items:center;gap:16px}
+.drawer-metrics{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.metric .v{font-family:var(--mono);font-size:21px;font-weight:500}
+.metric .v small{font-size:12px;color:var(--muted)}
+.metric .l{font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+
+/* ===== Screen 3: CARs ===== */
+.cars-stage{position:absolute;inset:0;background:radial-gradient(110% 80% at 50% 35%,#241F1C 0%,#120F0E 60%,#0A0A0A 100%)}
+.cars-head{position:absolute;top:60px;left:0;right:0;text-align:center;z-index:6}
+.cars-head .jt{font-family:var(--disp);font-size:18px;font-weight:600}
+.cars-head .ph{font-family:var(--mono);font-size:11px;color:var(--orange);letter-spacing:.18em;margin-top:4px}
+.cars-bottom{position:absolute;bottom:0;left:0;right:0;padding:18px 20px 30px;background:linear-gradient(transparent,rgba(10,10,10,.9) 40%);z-index:6}
+.coach-cue{display:flex;gap:10px;align-items:flex-start;background:rgba(255,92,0,.1);border:1px solid rgba(255,92,0,.35);border-radius:14px;padding:12px 14px;margin-bottom:14px}
+.coach-cue .ic{flex:none;width:26px;height:26px;border-radius:8px;background:var(--orange);display:flex;align-items:center;justify-content:center;font-size:13px;color:#0A0A0A;font-weight:700}
+.coach-cue p{font-size:12.5px;line-height:1.55}
+.cars-stats{display:flex;gap:10px}
+.cars-stats .st{flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line);border-radius:12px;padding:10px;text-align:center}
+.cars-stats .v{font-family:var(--mono);font-size:18px}
+.cars-stats .l{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.1em;margin-top:2px}
+
+/* ===== Screen 4: Report ===== */
+.s-report{padding:8px 20px 90px;height:768px;overflow:hidden}
+.rep-title{font-family:var(--disp);font-size:21px;font-weight:600;margin-top:12px}
+.rep-sub{font-family:var(--mono);font-size:11.5px;color:var(--muted);margin-top:4px}
+.arc-card{display:flex;align-items:center;gap:16px;margin-top:14px}
+.arc-card .info{flex:1}
+.arc-card .jn{font-size:14px;font-weight:600}
+.arc-card .jd{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:3px;line-height:1.6}
+.flag{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:10.5px;padding:4px 9px;border-radius:7px;margin-top:8px}
+.flag.bad{background:rgba(255,59,92,.12);color:var(--deficit);border:1px solid rgba(255,59,92,.3)}
+.flag.ok{background:rgba(74,222,128,.1);color:var(--good);border:1px solid rgba(74,222,128,.25)}
+.legend{display:flex;gap:14px;margin:16px 2px 4px;font-family:var(--mono);font-size:10px;color:var(--muted)}
+.legend span{display:flex;align-items:center;gap:6px}
+.lg{width:14px;height:3px;border-radius:2px}
+.ai-note{margin-top:14px;border-left:3px solid var(--orange);background:var(--surface);border-radius:0 14px 14px 0;padding:13px 14px}
+.ai-note .t{font-family:var(--mono);font-size:10px;color:var(--orange);letter-spacing:.18em;margin-bottom:6px}
+.ai-note p{font-size:12.5px;color:#CFC9C2;line-height:1.65}
+
+/* ===== Screen 5: Progress ===== */
+.s-prog{padding:8px 20px 90px}
+.range-pill{display:flex;background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:3px;margin-top:14px;font-family:var(--mono);font-size:11px}
+.range-pill div{flex:1;text-align:center;padding:8px 0;border-radius:8px;color:var(--muted)}
+.range-pill .on{background:var(--orange);color:#0A0A0A;font-weight:500}
+.big-delta{margin-top:20px}
+.big-delta .v{font-family:var(--mono);font-size:42px;font-weight:500;letter-spacing:-.02em}
+.big-delta .v em{font-style:normal;color:var(--good);font-size:18px;vertical-align:18px;margin-left:6px}
+.big-delta .l{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.session-log{margin-top:6px}
+.log-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.log-row .d{font-family:var(--mono);font-size:11px;color:var(--muted);width:52px}
+.log-row .what{font-size:13px;font-weight:500}
+.log-row .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px}
+.log-row .delta{margin-left:auto;font-family:var(--mono);font-size:12px}
+.up{color:var(--good)}.dn{color:var(--deficit)}
+
+@media(max-width:430px){
+  .phone{transform:scale(.92);transform-origin:top center}
+  .screen-wrap{width:100%;display:flex;flex-direction:column;align-items:center}
+}
+</style>
+</head>
+<body>
+<div class="shell">
+  <div class="shell-head">
+    <div class="brand-eyebrow">Movement Decoded · UI Design v3</div>
+    <h1>FRC Motion Analyser</h1>
+    <p>五個核心screen，統一design system。簽名元素係「Range Arc」——橙色實弧 = AROM，外圍幼線 = PROM 參考，紅色陰影段 = passive deficit。FRC個核心概念直接變成視覺語言。</p>
+    <div class="tokens">
+      <div class="tok"><span class="sw" style="background:#FF5C00"></span>#FF5C00 primary</div>
+      <div class="tok"><span class="sw" style="background:#4ADE80"></span>#4ADE80 good</div>
+      <div class="tok"><span class="sw" style="background:#FFB020"></span>#FFB020 warn</div>
+      <div class="tok"><span class="sw" style="background:#FF3B5C"></span>#FF3B5C deficit</div>
+      <div class="tok"><span class="sw" style="background:#0A0A0A;border:1px solid #333"></span>#0A0A0A ink</div>
+      <div class="tok">Space Grotesk / Inter / DM Mono</div>
+    </div>
+  </div>
+
+  <div class="screens">
+
+    <!-- ============ 01 HOME ============ -->
+    <div class="screen-wrap">
+      <div class="screen-label">
+        <div class="num">01 / HOME</div>
+        <h2>今日總覽</h2>
+        <p>一打開即見「開始評估」。今日客戶列表帶上次評估嘅關鍵joint score，唔使入profile都知今日focus邊度。</p>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>09:41</span><span>●●● ⌁ ▮</span></div>
+        <div class="s-home">
+          <div class="eyebrow">Thursday · 11 Jun</div>
+          <div class="greet">早晨，Ani</div>
+          <div class="start-cta">
+            <div class="t">開始評估</div>
+            <div class="s">CARs · PAILs/RAILs · 姿勢排列</div>
+            <div class="go">▶ &nbsp;選擇客戶</div>
+          </div>
+          <div class="sec-head"><h3>今日客戶</h3><a>全部 →</a></div>
+          <div class="card" style="padding:4px 16px">
+            <div class="client-row">
+              <div class="avatar">ML</div>
+              <div><div class="nm">Marcus Lee</div><div class="meta">52 · 髖關節重點 · 第6週</div></div>
+              <div class="mini-arc"><div class="v" style="color:var(--warn)">62°</div><div class="l">HIP ER</div></div>
+            </div>
+            <div class="client-row">
+              <div class="avatar">SW</div>
+              <div><div class="nm">Sarah Wong</div><div class="meta">47 · 肩胛控制 · 第3週</div></div>
+              <div class="mini-arc"><div class="v" style="color:var(--good)">168°</div><div class="l">SH FLEX</div></div>
+            </div>
+            <div class="client-row">
+              <div class="avatar">DK</div>
+              <div><div class="nm">David Kwan</div><div class="meta">58 · 8週重評到期</div></div>
+              <div class="mini-arc"><div class="v" style="color:var(--deficit)">RE-TEST</div><div class="l">DUE</div></div>
+            </div>
+          </div>
+          <div class="sec-head"><h3>本週數據</h3></div>
+          <div style="display:flex;gap:10px">
+            <div class="card" style="flex:1;text-align:center"><div style="font-family:var(--mono);font-size:22px">14</div><div class="eyebrow" style="margin-top:4px">評估次數</div></div>
+            <div class="card" style="flex:1;text-align:center"><div style="font-family:var(--mono);font-size:22px;color:var(--good)">+4.2°</div><div class="eyebrow" style="margin-top:4px">平均AROM增幅</div></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>主頁</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>客戶</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>評估</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/></svg>進度</div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+    </div>
+
+    <!-- ============ 02 LIVE ASSESSMENT ============ -->
+    <div class="screen-wrap">
+      <div class="screen-label">
+        <div class="num">02 / LIVE</div>
+        <h2>即時評估</h2>
+        <p>全屏鏡頭 + 橙色骨架overlay。角度tag跟住關節郁。偵測到人體時下方抽屜自動彈起peek狀態，向上掃展開完整數據。</p>
+      </div>
+      <div class="phone">
+        <div class="cam"></div>
+        <!-- skeleton -->
+        <svg style="position:absolute;left:50%;top:115px;transform:translateX(-50%);z-index:4" width="230" height="430" viewBox="0 0 230 430" fill="none">
+          <g stroke="#FF5C00" stroke-width="2.5" stroke-linecap="round" opacity=".95">
+            <line x1="115" y1="58" x2="115" y2="150"/>
+            <line x1="63" y1="86" x2="167" y2="86"/>
+            <line x1="63" y1="86" x2="40" y2="160"/><line x1="40" y1="160" x2="52" y2="228"/>
+            <line x1="167" y1="86" x2="194" y2="155"/><line x1="194" y1="155" x2="186" y2="226"/>
+            <line x1="88" y1="150" x2="142" y2="150"/>
+            <line x1="88" y1="150" x2="76" y2="248"/><line x1="76" y1="248" x2="84" y2="350"/><line x1="84" y1="350" x2="74" y2="372"/>
+            <line x1="142" y1="150" x2="160" y2="246"/><line x1="160" y1="246" x2="150" y2="350"/><line x1="150" y1="350" x2="164" y2="370"/>
+          </g>
+          <g fill="#0A0A0A" stroke="#FF5C00" stroke-width="2.5">
+            <circle cx="115" cy="38" r="17"/>
+            <circle cx="63" cy="86" r="5"/><circle cx="167" cy="86" r="5"/>
+            <circle cx="40" cy="160" r="5"/><circle cx="194" cy="155" r="5"/>
+            <circle cx="52" cy="228" r="5"/><circle cx="186" cy="226" r="5"/>
+            <circle cx="88" cy="150" r="5"/><circle cx="142" cy="150" r="5"/>
+            <circle cx="76" cy="248" r="6" fill="#FF5C00"/><circle cx="160" cy="246" r="5"/>
+            <circle cx="84" cy="350" r="5"/><circle cx="150" cy="350" r="5"/>
+          </g>
+          <!-- knee angle arc -->
+          <path d="M76 226 A 22 22 0 0 1 96 244" stroke="#FFB020" stroke-width="2" fill="none" stroke-dasharray="3 3"/>
+        </svg>
+        <div class="hud-top">
+          <span class="chip rec"><span class="dot"></span>REC 00:42</span>
+          <span class="chip"><span class="dot" style="background:var(--good)"></span>POSE LOCKED · 31/33</span>
+        </div>
+        <div class="angle-tag" style="left:34px;top:340px;border-color:rgba(255,176,32,.6)">L KNEE 156°</div>
+        <div class="angle-tag" style="right:30px;top:268px">R HIP 84°</div>
+        <div class="angle-tag" style="left:120px;top:160px;border-color:rgba(255,59,92,.6);color:#FF8CA0">骨盆側傾 4.2°</div>
+        <div class="drawer">
+          <div class="grab"></div>
+          <div class="drawer-row">
+            <!-- Range Arc -->
+            <svg width="104" height="104" viewBox="0 0 104 104">
+              <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
+              <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,59,92,.35)" stroke-width="9" pathLength="100" stroke-dasharray="14 86" stroke-dashoffset="-58" stroke-linecap="round"/>
+              <circle cx="52" cy="52" r="42" fill="none" stroke="#FF5C00" stroke-width="9" pathLength="100" stroke-dasharray="58 42" stroke-dashoffset="25" stroke-linecap="round"/>
+              <circle cx="52" cy="52" r="49" fill="none" stroke="rgba(255,255,255,.25)" stroke-width="1.5" pathLength="100" stroke-dasharray="72 28" stroke-dashoffset="25"/>
+              <text x="52" y="49" text-anchor="middle" fill="#F5F2EE" font-family="DM Mono" font-size="19">84°</text>
+              <text x="52" y="66" text-anchor="middle" fill="#8A8580" font-family="DM Mono" font-size="8.5" letter-spacing="1.5">HIP ER</text>
+            </svg>
+            <div class="drawer-metrics">
+              <div class="metric"><div class="v">84<small>/95°</small></div><div class="l">AROM / PROM</div></div>
+              <div class="metric"><div class="v" style="color:var(--deficit)">11°</div><div class="l">Passive Deficit</div></div>
+              <div class="metric"><div class="v" style="color:var(--good)">92<small>%</small></div><div class="l">Smoothness</div></div>
+              <div class="metric"><div class="v" style="color:var(--warn)">1</div><div class="l">代償偵測</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+    </div>
+
+    <!-- ============ 03 CARs GUIDED ============ -->
+    <div class="screen-wrap">
+      <div class="screen-label">
+        <div class="num">03 / CARS</div>
+        <h2>CARs 引導模式</h2>
+        <p>圓形軌跡引導：用戶要將關節帶住個光點行完整圈。行過嘅段變橙色，代償觸發時段變紅。語音提示同步。</p>
+      </div>
+      <div class="phone">
+        <div class="cars-stage"></div>
+        <div class="cars-head">
+          <div class="eyebrow">CARs · 第 2 / 3 圈</div>
+          <div class="jt">右髖關節 · 順時針</div>
+          <div class="ph">SLOW · MAX EFFORT · BREATHE</div>
+        </div>
+        <!-- circular path -->
+        <svg style="position:absolute;left:50%;top:50%;transform:translate(-50%,-54%);z-index:5" width="280" height="280" viewBox="0 0 280 280">
+          <circle cx="140" cy="140" r="118" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="3" stroke-dasharray="2 8"/>
+          <circle cx="140" cy="140" r="118" fill="none" stroke="#FF5C00" stroke-width="5" pathLength="100" stroke-dasharray="46 54" stroke-dashoffset="25" stroke-linecap="round"/>
+          <circle cx="140" cy="140" r="118" fill="none" stroke="#FF3B5C" stroke-width="5" pathLength="100" stroke-dasharray="7 93" stroke-dashoffset="-14" stroke-linecap="round"/>
+          <circle cx="252" cy="172" r="11" fill="#FF5C00"><animate attributeName="opacity" values="1;.5;1" dur="1.6s" repeatCount="indefinite"/></circle>
+          <circle cx="252" cy="172" r="19" fill="none" stroke="rgba(255,92,0,.45)" stroke-width="2"><animate attributeName="r" values="14;24" dur="1.6s" repeatCount="indefinite"/><animate attributeName="opacity" values=".8;0" dur="1.6s" repeatCount="indefinite"/></circle>
+          <text x="140" y="132" text-anchor="middle" fill="#F5F2EE" font-family="DM Mono" font-size="30">46%</text>
+          <text x="140" y="154" text-anchor="middle" fill="#8A8580" font-family="DM Mono" font-size="9.5" letter-spacing="2">ROTATION</text>
+        </svg>
+        <div class="cars-bottom">
+          <div class="coach-cue">
+            <div class="ic">!</div>
+            <p><strong>12點至1點位置偵測到骨盆代償。</strong>收緊核心，幅度可以細啲——控制優先於範圍。</p>
+          </div>
+          <div class="cars-stats">
+            <div class="st"><div class="v">0.8<span style="font-size:11px;color:var(--muted)">×</span></div><div class="l">速度</div></div>
+            <div class="st"><div class="v" style="color:var(--warn)">88%</div><div class="l">圓滑度</div></div>
+            <div class="st"><div class="v" style="color:var(--deficit)">1</div><div class="l">代償區段</div></div>
+          </div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+    </div>
+
+    <!-- ============ 04 REPORT ============ -->
+    <div class="screen-wrap">
+      <div class="screen-label">
+        <div class="num">04 / REPORT</div>
+        <h2>評估報告</h2>
+        <p>每個關節一張Range Arc卡：實弧AROM、幼線PROM、紅段deficit，一眼睇晒三層關係。底部AI生成professional summary，可一鍵出PDF俾客戶。</p>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>10:18</span><span>●●● ⌁ ▮</span></div>
+        <div class="s-report">
+          <div class="eyebrow">Marcus Lee · 評估 #6</div>
+          <div class="rep-title">髖關節評估報告</div>
+          <div class="rep-sub">11 Jun 2026 · 對比 28 May</div>
+          <div class="legend">
+            <span><span class="lg" style="background:#FF5C00"></span>AROM</span>
+            <span><span class="lg" style="background:rgba(255,255,255,.35);height:1.5px"></span>PROM</span>
+            <span><span class="lg" style="background:rgba(255,59,92,.6)"></span>Deficit</span>
+          </div>
+
+          <div class="card arc-card">
+            <svg width="86" height="86" viewBox="0 0 104 104">
+              <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
+              <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,59,92,.35)" stroke-width="9" pathLength="100" stroke-dasharray="9 91" stroke-dashoffset="-63" stroke-linecap="round"/>
+              <circle cx="52" cy="52" r="42" fill="none" stroke="#FF5C00" stroke-width="9" pathLength="100" stroke-dasharray="63 37" stroke-dashoffset="25" stroke-linecap="round"/>
+              <circle cx="52" cy="52" r="49" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.5" pathLength="100" stroke-dasharray="72 28" stroke-dashoffset="25"/>
+              <text x="52" y="50" text-anchor="middle" fill="#F5F2EE" font-family="DM Mono" font-size="17">88°</text>
+              <text x="52" y="65" text-anchor="middle" fill="#4ADE80" font-family="DM Mono" font-size="9">+4°</text>
+            </svg>
+            <div class="info">
+              <div class="jn">髖外旋（右）</div>
+              <div class="jd">AROM 88° · PROM 97° · Deficit 9°<br>對上次：deficit 收窄 3°</div>
+              <span class="flag ok">✓ 進步軌跡良好</span>
+            </div>
+          </div>
+
+          <div class="card arc-card">
+            <svg width="86" height="86" viewBox="0 0 104 104">
+              <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
+              <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,59,92,.35)" stroke-width="9" pathLength="100" stroke-dasharray="18 82" stroke-dashoffset="-49" stroke-linecap="round"/>
+              <circle cx="52" cy="52" r="42" fill="none" stroke="#FF5C00" stroke-width="9" pathLength="100" stroke-dasharray="49 51" stroke-dashoffset="25" stroke-linecap="round"/>
+              <circle cx="52" cy="52" r="49" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.5" pathLength="100" stroke-dasharray="70 30" stroke-dashoffset="25"/>
+              <text x="52" y="50" text-anchor="middle" fill="#F5F2EE" font-family="DM Mono" font-size="17">31°</text>
+              <text x="52" y="65" text-anchor="middle" fill="#8A8580" font-family="DM Mono" font-size="9">+0°</text>
+            </svg>
+            <div class="info">
+              <div class="jn">髖內旋（右）</div>
+              <div class="jd">AROM 31° · PROM 42° · Deficit 11°<br>連續兩次無進步</div>
+              <span class="flag bad">⚠ 代償：腰椎側屈介入</span>
+            </div>
+          </div>
+
+          <div class="ai-note">
+            <div class="t">AI SUMMARY · 可編輯</div>
+            <p>外旋持續改善，內旋連續兩週停滯且伴隨腰椎代償——建議下階段將內旋PAILs/RAILs提升至每週3次，並加入90/90等長保持作為home programme。</p>
+          </div>
+          <div class="btn-primary" style="margin-top:14px">出PDF報告 →</div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+    </div>
+
+    <!-- ============ 05 PROGRESS ============ -->
+    <div class="screen-wrap">
+      <div class="screen-label">
+        <div class="num">05 / PROGRESS</div>
+        <h2>進度追蹤</h2>
+        <p>趨勢圖三條線：AROM（橙）、PROM（白幼線）、deficit zone（紅色填充）。客戶見到紅色區域慢慢收窄，就係續約嘅最佳理由。</p>
+      </div>
+      <div class="phone">
+        <div class="statusbar"><span>10:24</span><span>●●● ⌁ ▮</span></div>
+        <div class="s-prog">
+          <div class="eyebrow">Marcus Lee · 髖外旋（右）</div>
+          <div class="range-pill"><div>4週</div><div class="on">8週</div><div>12週</div><div>全部</div></div>
+          <div class="big-delta">
+            <div class="v">+13°<em>▲ 17%</em></div>
+            <div class="l">AROM 增幅 · 8週</div>
+          </div>
+          <!-- trend chart -->
+          <svg width="100%" height="190" viewBox="0 0 335 190" style="margin-top:10px">
+            <g stroke="rgba(255,255,255,.06)"><line x1="0" y1="40" x2="335" y2="40"/><line x1="0" y1="85" x2="335" y2="85"/><line x1="0" y1="130" x2="335" y2="130"/></g>
+            <!-- deficit fill between PROM and AROM -->
+            <path d="M10 52 L75 50 L140 47 L205 46 L270 44 L325 42 L325 78 L270 84 L205 92 L140 96 L75 104 L10 110 Z" fill="rgba(255,59,92,.16)"/>
+            <!-- PROM line -->
+            <path d="M10 52 L75 50 L140 47 L205 46 L270 44 L325 42" stroke="rgba(255,255,255,.4)" stroke-width="1.5" fill="none" stroke-dasharray="4 4"/>
+            <!-- AROM line -->
+            <path d="M10 110 L75 104 L140 96 L205 92 L270 84 L325 78" stroke="#FF5C00" stroke-width="3" fill="none" stroke-linecap="round"/>
+            <g fill="#0A0A0A" stroke="#FF5C00" stroke-width="2.5">
+              <circle cx="10" cy="110" r="4"/><circle cx="75" cy="104" r="4"/><circle cx="140" cy="96" r="4"/><circle cx="205" cy="92" r="4"/><circle cx="270" cy="84" r="4"/><circle cx="325" cy="78" r="5" fill="#FF5C00"/>
+            </g>
+            <text x="166" y="66" text-anchor="middle" fill="rgba(255,120,140,.85)" font-family="DM Mono" font-size="9.5" letter-spacing="1.5">PASSIVE DEFICIT 收窄中</text>
+            <g fill="#8A8580" font-family="DM Mono" font-size="9">
+              <text x="10" y="186">W1</text><text x="140" y="186">W4</text><text x="312" y="186">W8</text>
+            </g>
+          </svg>
+          <div class="sec-head"><h3>評估記錄</h3></div>
+          <div class="session-log">
+            <div class="log-row"><div class="d">11/6</div><div><div class="what">完整髖評估</div><div class="sub">CARs ×3 · 代償 ×1</div></div><div class="delta up">+4°</div></div>
+            <div class="log-row"><div class="d">28/5</div><div><div class="what">完整髖評估</div><div class="sub">CARs ×3 · 無代償</div></div><div class="delta up">+3°</div></div>
+            <div class="log-row"><div class="d">14/5</div><div><div class="what">快速CARs檢查</div><div class="sub">smoothness 84%</div></div><div class="delta" style="color:var(--muted)">+0°</div></div>
+            <div class="log-row"><div class="d">30/4</div><div><div class="what">完整髖評估</div><div class="sub">CARs ×3 · 代償 ×2</div></div><div class="delta up">+6°</div></div>
+          </div>
+        </div>
+        <div class="tabbar">
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8v9a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>主頁</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>客戶</div>
+          <div class="tab"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>評估</div>
+          <div class="tab active"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/></svg>進度</div>
+        </div>
+        <div class="homebar"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</body>
+</html>
