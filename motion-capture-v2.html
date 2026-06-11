@@ -6,21 +6,25 @@
 <title>Movement Decoded — Motion Capture</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
+    /* Movement Decoded design tokens — aligned to frc-motion-ui-v3.html /
+       DESIGN SPEC.md §1 (var names kept for backwards compat with JS). */
     --color-primary:#FF5C00;
+    --color-primary-soft:rgba(255,92,0,.14);
     --color-bg:#0A0A0A;
-    --color-surface:#161616;
-    --color-surface-2:#222222;
-    --color-text:#FFFFFF;
-    --color-text-dim:#9A9A9A;
-    --color-border:#2C2C2C;
-    --color-warn:#FFC400;
-    --color-danger:#FF3B30;
-    --color-ok:#34C759;
+    --color-surface:#151515;
+    --color-surface-2:#1E1E1E;
+    --color-text:#F5F2EE;
+    --color-text-dim:#8A8580;
+    --color-border:rgba(255,255,255,.08);
+    --color-warn:#FFB020;
+    --color-danger:#FF3B5C;
+    --color-ok:#4ADE80;
     --font-ui:'Inter',sans-serif;
     --font-data:'DM Mono',monospace;
+    --font-display:'Space Grotesk',sans-serif;
     --drawer-h:85vh;
     --drawer-collapsed:72px;
     --drawer-half:46vh;
@@ -53,13 +57,13 @@
     text-align:center; padding:24px;
   }
   #start-overlay .logo{
-    font-weight:800; font-size:28px; letter-spacing:1px;
+    font-family:var(--font-display); font-weight:700; font-size:28px; letter-spacing:1px;
   }
   #start-overlay .logo span{color:var(--color-primary);}
   #start-overlay p{color:var(--color-text-dim); font-size:14px; max-width:320px; line-height:1.6;}
   #start-btn{
     background:var(--color-primary);
-    color:#fff; border:none; border-radius:999px;
+    color:#0A0A0A; border:none; border-radius:999px;
     padding:16px 40px; font-size:16px; font-weight:700;
     font-family:var(--font-ui);
     cursor:pointer;
@@ -75,12 +79,13 @@
     background:linear-gradient(to bottom, rgba(0,0,0,.65), rgba(0,0,0,0));
     z-index:20; pointer-events:none;
   }
-  #topbar .brand{font-weight:800; font-size:16px; letter-spacing:.5px;}
+  #topbar .brand{font-family:var(--font-display); font-weight:700; font-size:16px; letter-spacing:.5px;}
   #topbar .brand span{color:var(--color-primary);}
   #topbar .status{
     display:flex; align-items:center; gap:6px;
     font-family:var(--font-data); font-size:12px; color:var(--color-text-dim);
-    background:rgba(0,0,0,.4); border-radius:999px; padding:6px 12px;
+    background:rgba(0,0,0,.45); border:1px solid var(--color-border); border-radius:999px; padding:6px 12px;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   }
   #topbar .dot{width:8px; height:8px; border-radius:50%; background:var(--color-danger); animation:pulse 1.4s infinite;}
   #topbar .dot.tracking{background:var(--color-ok); animation:none;}
@@ -91,8 +96,8 @@
     width:34px; height:34px; border-radius:50%;
     display:flex; align-items:center; justify-content:center;
     font-size:16px; line-height:1; color:var(--color-text);
-    background:rgba(0,0,0,.4); border:1px solid var(--color-border);
-    cursor:pointer; backdrop-filter:blur(6px);
+    background:rgba(0,0,0,.45); border:1px solid var(--color-border);
+    cursor:pointer; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   }
 
   /* ---------- Mode bar ---------- */
@@ -104,11 +109,12 @@
   }
   .mode-btn{
     font-family:var(--font-ui); font-size:12px; font-weight:600;
-    color:var(--color-text); background:rgba(20,20,20,.6);
+    color:var(--color-text); background:rgba(0,0,0,.45);
     border:1px solid var(--color-border); border-radius:999px;
-    padding:8px 16px; cursor:pointer; backdrop-filter:blur(6px);
+    padding:8px 16px; cursor:pointer;
+    backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   }
-  .mode-btn.active{background:var(--color-primary); border-color:var(--color-primary); color:#fff;}
+  .mode-btn.active{background:var(--color-primary); border-color:var(--color-primary); color:#0A0A0A;}
 
   /* ---------- Camera hint banner ---------- */
   #camera-hint{
@@ -118,9 +124,9 @@
   }
   #camera-hint span{
     font-family:var(--font-ui); font-size:11px; font-weight:600;
-    color:var(--color-text-dim); background:rgba(20,20,20,.6);
+    color:var(--color-text-dim); background:rgba(0,0,0,.45);
     border:1px solid var(--color-border); border-radius:999px;
-    padding:6px 14px; backdrop-filter:blur(6px);
+    padding:6px 14px; backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
   }
 
   /* ---------- View toggle (squat side/front) ---------- */
@@ -131,14 +137,15 @@
     border:1px solid var(--color-border); border-radius:999px;
     padding:6px 14px; cursor:pointer;
   }
-  .view-btn.active{background:var(--color-primary); border-color:var(--color-primary); color:#fff;}
+  .view-btn.active{background:var(--color-primary); border-color:var(--color-primary); color:#0A0A0A;}
 
   /* ---------- Drawer ---------- */
   #drawer{
     position:absolute; left:0; right:0; bottom:0;
     height:var(--drawer-h);
-    background:var(--color-surface);
-    border-top-left-radius:24px; border-top-right-radius:24px;
+    background:rgba(14,14,14,.94);
+    backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px);
+    border-top-left-radius:26px; border-top-right-radius:26px;
     border-top:1px solid var(--color-border);
     box-shadow:0 -8px 30px rgba(0,0,0,.5);
     transform:translateY(calc(var(--drawer-h) - var(--drawer-collapsed)));
@@ -155,7 +162,7 @@
     display:flex; flex-direction:column; align-items:center; gap:10px;
     cursor:grab;
   }
-  #drawer-handle .bar{width:40px; height:4px; border-radius:2px; background:var(--color-border);}
+  #drawer-handle .bar{width:42px; height:4px; border-radius:2px; background:rgba(255,255,255,.2);}
   #drawer-summary{
     width:100%; display:flex; justify-content:space-around;
     font-family:var(--font-data); font-size:13px; color:var(--color-text-dim);
@@ -180,7 +187,7 @@
     display:grid; grid-template-columns:1fr 1fr; gap:10px;
   }
   .angle-card{
-    background:var(--color-surface-2); border-radius:14px; padding:12px 14px;
+    background:var(--color-surface-2); border-radius:16px; padding:14px 16px;
     border:1px solid var(--color-border);
   }
   .angle-card .name{font-size:12px; color:var(--color-text-dim); margin-bottom:4px;}
@@ -190,7 +197,7 @@
 
   .align-row{
     display:flex; align-items:center; justify-content:space-between;
-    background:var(--color-surface-2); border-radius:14px;
+    background:var(--color-surface-2); border-radius:16px;
     padding:12px 14px; margin-bottom:10px; border:1px solid var(--color-border);
   }
   .align-row .name{font-size:13px;}
@@ -210,13 +217,13 @@
 
   #alerts{display:flex; flex-direction:column; gap:8px;}
   .alert-item{
-    background:rgba(255,196,0,.1); border:1px solid var(--color-warn);
+    background:rgba(255,176,32,.12); border:1px solid rgba(255,176,32,.35);
     color:var(--color-warn); border-radius:10px; padding:10px 12px;
     font-size:12px; display:flex; align-items:center; gap:8px;
   }
   .alert-empty{
-    color:var(--color-ok); font-size:12px; background:rgba(52,199,89,.1);
-    border:1px solid var(--color-ok); border-radius:10px; padding:10px 12px;
+    color:var(--color-ok); font-size:12px; background:rgba(74,222,128,.1);
+    border:1px solid rgba(74,222,128,.25); border-radius:10px; padding:10px 12px;
   }
 
   #record-controls{display:flex; gap:10px; margin-top:18px;}
@@ -224,7 +231,7 @@
     flex:1; font-family:var(--font-ui); font-weight:700; font-size:14px;
     border-radius:12px; padding:14px; border:none; cursor:pointer;
   }
-  .btn-primary{background:var(--color-primary); color:#fff;}
+  .btn-primary{background:var(--color-primary); color:#0A0A0A;}
   .btn-secondary{background:var(--color-surface-2); color:var(--color-text); border:1px solid var(--color-border);}
   .btn:active{opacity:.8;}
   .btn[disabled]{opacity:.4; cursor:default;}
