@@ -1,0 +1,35 @@
+name: frc_motion_analyser
+description: "FRC Motion Analyser — Movement Decoded"
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: '>=3.3.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  google_fonts: ^6.2.1
+
+  # Screen 02 Live — camera feed + on-device pose detection.
+  camera: ^0.10.6
+  google_mlkit_pose_detection: ^0.12.0
+
+  # Screen 02 Live — local session recording (pending Firestore sync).
+  path_provider: ^2.1.0
+
+  # Future deps (added when the relevant screen is implemented, per
+  # DESIGN SPEC.md §8 Flutter實作指引):
+  #   fl_chart                             — Screen 05 Progress (or CustomPainter)
+  #   firebase_core, cloud_firestore       — Screen 01 Home data + persistence
+  #   pdf, printing                        — Screen 04 Report export
+  #   flutter_tts                          — Screen 03 CARs voice cues
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+
+flutter:
+  uses-material-design: true
