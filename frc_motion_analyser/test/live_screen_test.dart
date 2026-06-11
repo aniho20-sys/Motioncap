@@ -37,6 +37,32 @@ PoseFrame _frameWithVisibleCount(int count) {
   );
 }
 
+/// A perfectly upright standing pose — shoulder/hip/knee/ankle stacked
+/// vertically per side, so hip/knee angles read ~180°.
+PoseFrame _standingFrame() {
+  final landmarks = List<PoseLandmark>.filled(
+    PoseLandmarkIndex.total,
+    const PoseLandmark(x: 0.5, y: 0.5, visibility: 1.0),
+  );
+
+  void at(int index, double x, double y) {
+    landmarks[index] = PoseLandmark(x: x, y: y, visibility: 1.0);
+  }
+
+  at(PoseLandmarkIndex.leftShoulder, 0.45, 0.2);
+  at(PoseLandmarkIndex.rightShoulder, 0.55, 0.2);
+  at(PoseLandmarkIndex.leftElbow, 0.45, 0.35);
+  at(PoseLandmarkIndex.rightElbow, 0.55, 0.35);
+  at(PoseLandmarkIndex.leftHip, 0.45, 0.5);
+  at(PoseLandmarkIndex.rightHip, 0.55, 0.5);
+  at(PoseLandmarkIndex.leftKnee, 0.45, 0.7);
+  at(PoseLandmarkIndex.rightKnee, 0.55, 0.7);
+  at(PoseLandmarkIndex.leftAnkle, 0.45, 0.9);
+  at(PoseLandmarkIndex.rightAnkle, 0.55, 0.9);
+
+  return PoseFrame(landmarks: landmarks);
+}
+
 void main() {
   testWidgets('shows POSE LOCKED with visible landmark count', (tester) async {
     final poseSource = _FakePoseSource();
@@ -49,6 +75,22 @@ void main() {
     await tester.pump();
 
     expect(find.text('POSE LOCKED · 30/33'), findsOneWidget);
+  });
+
+  testWidgets('shows live joint angle tags and the measured-joint list', (tester) async {
+    final poseSource = _FakePoseSource();
+    addTearDown(poseSource.dispose);
+
+    await tester.pumpWidget(MaterialApp(home: LiveScreen(poseSource: poseSource)));
+    await tester.pump();
+
+    poseSource.emit(_standingFrame());
+    await tester.pump();
+
+    expect(find.text('L HIP 180°'), findsOneWidget);
+    expect(find.text('R KNEE 180°'), findsOneWidget);
+    expect(find.text('未有已測關節 · No joints measured yet'), findsNothing);
+    expect(find.text('180°'), findsWidgets);
   });
 
   testWidgets('shows RE-ACQUIRING after sustained pose loss', (tester) async {
