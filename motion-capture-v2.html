@@ -86,6 +86,15 @@
   #topbar .dot.tracking{background:var(--color-ok); animation:none;}
   @keyframes pulse{0%,100%{opacity:1;} 50%{opacity:.25;}}
 
+  #switch-camera-btn{
+    pointer-events:auto;
+    width:34px; height:34px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px; line-height:1; color:var(--color-text);
+    background:rgba(0,0,0,.4); border:1px solid var(--color-border);
+    cursor:pointer; backdrop-filter:blur(6px);
+  }
+
   /* ---------- Mode bar ---------- */
   #modebar{
     position:absolute; top:64px; left:0; right:0;
@@ -235,6 +244,7 @@
       <span id="status-text">未連接</span>
       <span id="fps">·</span>
     </div>
+    <button id="switch-camera-btn" title="切換鏡頭 Switch Camera">⇄</button>
   </div>
 
   <div id="modebar">
@@ -448,6 +458,7 @@
   const statusDot = document.getElementById('status-dot');
   const statusText = document.getElementById('status-text');
   const fpsEl = document.getElementById('fps');
+  const switchCameraBtn = document.getElementById('switch-camera-btn');
   const drawer = document.getElementById('drawer');
   const drawerHandle = document.getElementById('drawer-handle');
   const recordBtn = document.getElementById('btn-record');
@@ -820,9 +831,11 @@
 
     ctx.save();
     ctx.clearRect(0, 0, canvasEl.width, canvasEl.height);
-    // Mirror for selfie view
-    ctx.translate(canvasEl.width, 0);
-    ctx.scale(-1, 1);
+    // Mirror for selfie view (front camera only — back camera shows the world as-is)
+    if(facingMode === 'user'){
+      ctx.translate(canvasEl.width, 0);
+      ctx.scale(-1, 1);
+    }
     ctx.drawImage(results.image, 0, 0, canvasEl.width, canvasEl.height);
 
     if(results.poseLandmarks){
@@ -994,19 +1007,34 @@
   pose.onResults(onResults);
 
   let camera = null;
+  let facingMode = 'user'; // 'user' (front/selfie) | 'environment' (back)
+
+  function stopCamera(){
+    if(!camera) return;
+    if(typeof camera.stop === 'function'){
+      camera.stop();
+    } else if(videoEl.srcObject){
+      videoEl.srcObject.getTracks().forEach(track => track.stop());
+    }
+    camera = null;
+  }
+
+  async function startCamera(){
+    camera = new window.Camera(videoEl, {
+      onFrame: async () => { await pose.send({image: videoEl}); },
+      width: 1280,
+      height: 720,
+      facingMode
+    });
+    await camera.start();
+  }
 
   startBtn.addEventListener('click', async () => {
     startBtn.disabled = true;
     startBtn.textContent = '啟動中...';
     errorMsg.textContent = '';
     try{
-      camera = new window.Camera(videoEl, {
-        onFrame: async () => { await pose.send({image: videoEl}); },
-        width: 1280,
-        height: 720,
-        facingMode: 'user'
-      });
-      await camera.start();
+      await startCamera();
       startOverlay.classList.add('hidden');
       statusText.textContent = '相機已連接';
     } catch(err){
@@ -1014,6 +1042,27 @@
       startBtn.disabled = false;
       startBtn.textContent = '開啟相機 Start Camera';
       errorMsg.textContent = '無法存取相機：' + (err && err.message ? err.message : '請檢查權限或使用 HTTPS / localhost。');
+    }
+  });
+
+  switchCameraBtn.addEventListener('click', async () => {
+    facingMode = facingMode === 'user' ? 'environment' : 'user';
+    if(!camera){
+      // Camera not started yet — preference applies on next Start Camera click
+      return;
+    }
+    switchCameraBtn.disabled = true;
+    statusDot.classList.remove('tracking');
+    statusText.textContent = '切換鏡頭中...';
+    try{
+      stopCamera();
+      await startCamera();
+      statusText.textContent = '相機已連接';
+    } catch(err){
+      console.error(err);
+      errorMsg.textContent = '無法切換相機：' + (err && err.message ? err.message : '請檢查權限。');
+    } finally {
+      switchCameraBtn.disabled = false;
     }
   });
 })();
