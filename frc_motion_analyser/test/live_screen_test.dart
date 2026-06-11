@@ -4,8 +4,21 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:frc_motion_analyser/cv/pose_source.dart';
+import 'package:frc_motion_analyser/data/session_storage.dart';
 import 'package:frc_motion_analyser/models/pose_landmark.dart';
+import 'package:frc_motion_analyser/models/session_recording.dart';
 import 'package:frc_motion_analyser/screens/live_screen.dart';
+import 'package:frc_motion_analyser/widgets/record_button.dart';
+
+class _FakeSessionStorage implements SessionStorage {
+  SessionRecording? saved;
+
+  @override
+  Future<String> save(SessionRecording recording) async {
+    saved = recording;
+    return 'fake/session.json';
+  }
+}
 
 class _FakePoseSource implements PoseSource {
   final _controller = StreamController<PoseFrame>.broadcast();
@@ -91,6 +104,33 @@ void main() {
     expect(find.text('R KNEE 180°'), findsOneWidget);
     expect(find.text('未有已測關節 · No joints measured yet'), findsNothing);
     expect(find.text('180°'), findsWidgets);
+  });
+
+  testWidgets('records a session and saves it on stop', (tester) async {
+    final poseSource = _FakePoseSource();
+    addTearDown(poseSource.dispose);
+    final storage = _FakeSessionStorage();
+
+    await tester.pumpWidget(MaterialApp(
+      home: LiveScreen(poseSource: poseSource, sessionStorage: storage),
+    ));
+    await tester.pump();
+
+    await tester.tap(find.byType(RecordButton));
+    await tester.pump();
+
+    expect(find.textContaining('REC'), findsOneWidget);
+
+    poseSource.emit(_standingFrame());
+    await tester.pump();
+
+    await tester.tap(find.byType(RecordButton));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('REC'), findsNothing);
+    expect(storage.saved, isNotNull);
+    expect(storage.saved!.frames, isNotEmpty);
+    expect(find.textContaining('已儲存 Session'), findsOneWidget);
   });
 
   testWidgets('shows RE-ACQUIRING after sustained pose loss', (tester) async {
