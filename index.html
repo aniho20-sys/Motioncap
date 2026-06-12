@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>FRC Motion Analyser</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=DM+Mono:wght@400;500&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0A0A;--surface:#151515;--surface2:#1E1E1E;--line:rgba(255,255,255,.08);
+  --orange:#FF5C00;--orange-soft:rgba(255,92,0,.14);
+  --good:#4ADE80;--warn:#FFB020;--deficit:#FF3B5C;
+  --text:#F5F2EE;--muted:#8A8580;
+  --mono:'DM Mono',monospace;--disp:'Space Grotesk',sans-serif;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{background:var(--ink);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
+.mono{font-family:var(--mono)}
+
+#app{height:100dvh;display:flex;flex-direction:column}
+.view{flex:1;overflow-y:auto;display:none;padding-bottom:90px}
+.view.on{display:block}
+
+/* ===== tab bar ===== */
+.tabbar{position:fixed;bottom:0;left:0;right:0;height:calc(64px + env(safe-area-inset-bottom));background:rgba(10,10,10,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:50}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer}
+.tab.active{color:var(--orange)}
+.tab svg{width:22px;height:22px}
+
+/* ===== assess view ===== */
+#assess{position:relative;padding:0;background:#000}
+.stage{position:absolute;inset:0;overflow:hidden}
+video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+#overlay{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1)}
+.hud-top{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5;pointer-events:none}
+.chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.dot{width:7px;height:7px;border-radius:50%;flex:none}
+@keyframes blink{50%{opacity:.25}}
+.blink{animation:blink 1.2s infinite}
+
+.joint-strip{position:absolute;top:calc(56px + env(safe-area-inset-top));left:0;right:0;display:flex;gap:8px;overflow-x:auto;padding:6px 14px;z-index:5;scrollbar-width:none}
+.joint-strip::-webkit-scrollbar{display:none}
+.jchip{flex:none;font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.55);color:var(--muted);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer}
+.jchip.on{background:var(--orange);color:#0A0A0A;border-color:var(--orange);font-weight:500}
+
+/* drawer */
+.drawer{position:absolute;left:0;right:0;bottom:64px;background:rgba(14,14,14,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:10px 18px 16px;z-index:6}
+.grab{width:42px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 12px}
+.drawer-row{display:flex;align-items:center;gap:14px}
+.metrics{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
+.metric .v{font-family:var(--mono);font-size:19px;font-weight:500}
+.metric .v small{font-size:11px;color:var(--muted)}
+.metric .l{font-family:var(--mono);font-size:9px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase;margin-top:1px}
+.session-btn{margin-top:12px;width:100%;border:none;border-radius:13px;padding:14px;font-family:'Inter';font-size:15px;font-weight:700;background:var(--orange);color:#0A0A0A;cursor:pointer}
+.session-btn.stop{background:var(--deficit);color:#fff}
+.session-btn:disabled{background:var(--surface2);color:var(--muted)}
+
+#startgate{position:absolute;inset:0;z-index:10;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+#startgate .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--orange);text-transform:uppercase}
+#startgate h1{font-family:var(--disp);font-size:26px;margin:12px 0 10px}
+#startgate p{color:var(--muted);font-size:13.5px;line-height:1.7;max-width:300px}
+#startgate button{margin-top:26px;border:none;border-radius:14px;padding:16px 38px;font-size:15px;font-weight:700;background:var(--orange);color:#0A0A0A;cursor:pointer;font-family:'Inter'}
+#gatestatus{margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted);min-height:16px}
+
+/* ===== toast ===== */
+#toast{position:fixed;top:calc(110px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-8px);background:rgba(255,59,92,.15);border:1px solid rgba(255,59,92,.5);color:#FF8CA0;font-size:12.5px;padding:10px 16px;border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:.25s;z-index:60;pointer-events:none;max-width:85%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ===== progress view ===== */
+#progress{padding:0 20px}
+.pg-head{padding-top:calc(18px + env(safe-area-inset-top))}
+.eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
+.pg-head h1{font-family:var(--disp);font-size:23px;font-weight:600;margin-top:6px}
+.big-delta{margin-top:18px}
+.big-delta .v{font-family:var(--mono);font-size:40px;font-weight:500;letter-spacing:-.02em}
+.big-delta .v em{font-style:normal;font-size:16px;vertical-align:16px;margin-left:6px}
+.big-delta .l{font-family:var(--mono);font-size:11px;color:var(--muted);margin-top:2px}
+.trend{display:flex;align-items:flex-end;gap:6px;height:110px;margin-top:18px;padding:0 2px}
+.bar{flex:1;background:var(--orange-soft);border-radius:6px 6px 2px 2px;position:relative;min-width:14px;max-width:46px}
+.bar i{position:absolute;left:0;right:0;bottom:0;background:var(--orange);border-radius:6px 6px 2px 2px;display:block}
+.bar span{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:9.5px;color:var(--muted)}
+.sec-head{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 6px}
+.sec-head h3{font-family:var(--disp);font-size:15px;font-weight:600}
+.sec-head a{font-family:var(--mono);font-size:11px;color:var(--deficit);cursor:pointer}
+.log-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.log-row .d{font-family:var(--mono);font-size:11px;color:var(--muted);width:50px;flex:none}
+.log-row .what{font-size:13.5px;font-weight:600}
+.log-row .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px}
+.log-row .delta{margin-left:auto;font-family:var(--mono);font-size:13px;flex:none}
+.empty{margin-top:40px;text-align:center;color:var(--muted);font-size:13px;line-height:1.8}
+.empty .ic{font-size:30px;margin-bottom:10px}
+
+/* result modal */
+#resultmodal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-end}
+#resultmodal.show{display:flex}
+.result-card{width:100%;background:var(--surface);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:22px 22px calc(28px + env(safe-area-inset-bottom))}
+.result-card .eyebrow{color:var(--orange)}
+.result-card h2{font-family:var(--disp);font-size:21px;margin:8px 0 16px}
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rg{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:13px}
+.rg .v{font-family:var(--mono);font-size:23px}
+.rg .l{font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:.1em;margin-top:3px;text-transform:uppercase}
+.result-card .close{margin-top:18px;width:100%;border:none;border-radius:13px;padding:15px;font-size:14px;font-weight:700;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ============ ASSESS ============ -->
+  <div class="view on" id="assess">
+    <div class="stage">
+      <video id="video" autoplay muted playsinline></video>
+      <canvas id="overlay"></canvas>
+    </div>
+
+    <div class="hud-top">
+      <span class="chip" id="recchip" style="display:none"><span class="dot blink" style="background:var(--deficit)"></span><span id="rectime">00:00</span></span>
+      <span class="chip" id="posechip"><span class="dot" id="posedot" style="background:var(--muted)"></span><span id="posetext">INITIALISING</span></span>
+    </div>
+
+    <div class="joint-strip" id="jointstrip"></div>
+
+    <div class="drawer">
+      <div class="grab"></div>
+      <div class="drawer-row">
+        <svg width="96" height="96" viewBox="0 0 104 104" id="arcsvg">
+          <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
+          <circle id="arc-max" cx="52" cy="52" r="49" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.5" pathLength="100" stroke-dasharray="0 100" stroke-dashoffset="25"/>
+          <circle id="arc-cur" cx="52" cy="52" r="42" fill="none" stroke="#FF5C00" stroke-width="9" pathLength="100" stroke-dasharray="0 100" stroke-dashoffset="25" stroke-linecap="round" style="transition:stroke-dasharray .15s linear"/>
+          <text id="arc-val" x="52" y="49" text-anchor="middle" fill="#F5F2EE" font-family="DM Mono" font-size="19">--</text>
+          <text id="arc-lab" x="52" y="66" text-anchor="middle" fill="#8A8580" font-family="DM Mono" font-size="8" letter-spacing="1.5">ANGLE</text>
+        </svg>
+        <div class="metrics">
+          <div class="metric"><div class="v" id="m-rom">--<small>°</small></div><div class="l">ROM 本節</div></div>
+          <div class="metric"><div class="v" id="m-max">--<small>°</small></div><div class="l">最大角度</div></div>
+          <div class="metric"><div class="v" id="m-smooth" style="color:var(--good)">--<small>%</small></div><div class="l">Smoothness</div></div>
+          <div class="metric"><div class="v" id="m-comp" style="color:var(--warn)">0</div><div class="l">代償偵測</div></div>
+        </div>
+      </div>
+      <button class="session-btn" id="sessionbtn" disabled>開始評估</button>
+    </div>
+
+    <div id="startgate">
+      <div class="eyebrow">Movement Decoded</div>
+      <h1>FRC Motion Analyser</h1>
+      <p>鏡頭只喺裝置本機運算，唔會上傳任何影像。企喺鏡頭前2–3米，全身入鏡效果最好。</p>
+      <button id="launchbtn">啟動鏡頭 →</button>
+      <div id="gatestatus"></div>
+    </div>
+  </div>
+
+  <!-- ============ PROGRESS ============ -->
+  <div class="view" id="progress">
+    <div class="pg-head">
+      <div class="eyebrow">Progress</div>
+      <h1>進度追蹤</h1>
+    </div>
+    <div id="pgcontent"></div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active" data-v="assess"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3" fill="currentColor"/></svg>評估</div>
+    <div class="tab" data-v="progress"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 17l6-6 4 4 8-8"/></svg>進度</div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<div id="resultmodal">
+  <div class="result-card">
+    <div class="eyebrow">Session Complete</div>
+    <h2 id="r-title">評估結果</h2>
+    <div class="result-grid">
+      <div class="rg"><div class="v" id="r-rom">--°</div><div class="l">ROM</div></div>
+      <div class="rg"><div class="v" id="r-delta">--</div><div class="l">對上次</div></div>
+      <div class="rg"><div class="v" id="r-smooth">--%</div><div class="l">Smoothness</div></div>
+      <div class="rg"><div class="v" id="r-comp">0</div><div class="l">代償</div></div>
+    </div>
+    <button class="close" id="r-close">完成</button>
+  </div>
+</div>
+
+<script type="module">
+import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14";
+
+/* ================= config ================= */
+const JOINTS = {
+  hip_r:      { label:'右髖屈', pts:[12,24,26], norm:130, mode:'flex' },
+  hip_l:      { label:'左髖屈', pts:[11,23,25], norm:130, mode:'flex' },
+  knee_r:     { label:'右膝',   pts:[24,26,28], norm:145, mode:'flex' },
+  knee_l:     { label:'左膝',   pts:[23,25,27], norm:145, mode:'flex' },
+  shoulder_r: { label:'右肩',   pts:[24,12,14], norm:180, mode:'raw'  },
+  shoulder_l: { label:'左肩',   pts:[23,11,13], norm:180, mode:'raw'  },
+  elbow_r:    { label:'右肘',   pts:[12,14,16], norm:150, mode:'flex' },
+  elbow_l:    { label:'左肘',   pts:[11,13,15], norm:150, mode:'flex' },
+};
+const CONNECTIONS = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
+const PELVIS_TILT_LIMIT = 5; // degrees
+const STORE_KEY = 'md_sessions_v1';
+
+/* ================= state ================= */
+let landmarker = null, video, canvas, ctx;
+let running = false, lastTs = -1;
+let currentJoint = 'hip_r';
+let session = null; // {start, joint, min, max, velBuf, comps, lastCompAt}
+let lastAngles = [], lastAngleTs = 0;
+let poseLocked = false;
+
+const $ = id => document.getElementById(id);
+
+/* ================= boot ================= */
+buildJointStrip();
+renderProgress();
+
+$('launchbtn').onclick = async () => {
+  const st = $('gatestatus');
+  try{
+    st.textContent = '載入AI模型中…（首次約10秒）';
+    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+    landmarker = await PoseLandmarker.createFromOptions(vision, {
+      baseOptions: {
+        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+        delegate: "GPU"
+      },
+      runningMode: "VIDEO", numPoses: 1,
+      minPoseDetectionConfidence: .5, minPosePresenceConfidence: .5, minTrackingConfidence: .5
+    });
+    st.textContent = '開啟鏡頭中…';
+    video = $('video');
+    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio:false });
+    video.srcObject = stream;
+    await new Promise(r => video.onloadedmetadata = r);
+    video.play();
+    canvas = $('overlay'); ctx = canvas.getContext('2d');
+    resize(); window.addEventListener('resize', resize);
+    $('startgate').style.display = 'none';
+    running = true;
+    requestAnimationFrame(loop);
+  }catch(e){
+    st.textContent = e.name === 'NotAllowedError'
+      ? '鏡頭權限被拒絕——請喺browser設定開返再reload'
+      : '初始化失敗：' + (e.message||e);
+  }
+};
+
+function resize(){
+  const r = $('assess').getBoundingClientRect();
+  canvas.width = r.width * devicePixelRatio;
+  canvas.height = r.height * devicePixelRatio;
+}
+
+/* ================= main loop ================= */
+function loop(){
+  if(!running) return;
+  if(video.currentTime !== lastTs){
+    lastTs = video.currentTime;
+    const res = landmarker.detectForVideo(video, performance.now());
+    draw(res);
+  }
+  requestAnimationFrame(loop);
+}
+
+function vidToCanvas(lm){
+  // object-fit: cover mapping
+  const cw = canvas.width, ch = canvas.height;
+  const vw = video.videoWidth, vh = video.videoHeight;
+  const scale = Math.max(cw/vw, ch/vh);
+  const ox = (cw - vw*scale)/2, oy = (ch - vh*scale)/2;
+  return { x: lm.x*vw*scale + ox, y: lm.y*vh*scale + oy };
+}
+
+function draw(res){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const lms = res.landmarks && res.landmarks[0];
+  const visCount = lms ? lms.filter(l=>(l.visibility??1)>.5).length : 0;
+  setPoseState(visCount);
+  if(!lms){ return; }
+
+  const P = lms.map(vidToCanvas);
+  const dpr = devicePixelRatio;
+
+  // pelvis tilt check
+  const tilt = pelvisTilt(lms);
+  const pelvisBad = tilt !== null && tilt > PELVIS_TILT_LIMIT;
+
+  // skeleton
+  ctx.lineWidth = 2.5*dpr; ctx.lineCap = 'round';
+  for(const [a,b] of CONNECTIONS){
+    if((lms[a].visibility??1)<.4||(lms[b].visibility??1)<.4) continue;
+    const hipLine = (a===23&&b===24);
+    ctx.strokeStyle = hipLine && pelvisBad ? '#FF3B5C' : '#FF5C00';
+    ctx.beginPath(); ctx.moveTo(P[a].x,P[a].y); ctx.lineTo(P[b].x,P[b].y); ctx.stroke();
+  }
+  const J = JOINTS[currentJoint];
+  for(const i of new Set(CONNECTIONS.flat())){
+    if((lms[i].visibility??1)<.4) continue;
+    const isActive = i === J.pts[1];
+    ctx.beginPath(); ctx.arc(P[i].x,P[i].y,(isActive?6:4.5)*dpr,0,Math.PI*2);
+    ctx.fillStyle = isActive ? '#FF5C00' : '#0A0A0A';
+    ctx.fill(); ctx.lineWidth = 2.5*dpr; ctx.strokeStyle='#FF5C00'; ctx.stroke();
+  }
+
+  // current joint angle
+  const ang = jointAngle(lms, J);
+  if(ang !== null){
+    drawTag(P[J.pts[1]], `${J.label} ${Math.round(ang)}°`, '#FF5C00');
+    updateLive(ang);
+  }
+  if(pelvisBad){
+    const mid = { x:(P[23].x+P[24].x)/2, y:(P[23].y+P[24].y)/2 - 28*dpr };
+    drawTag(mid, `骨盆側傾 ${tilt.toFixed(1)}°`, '#FF3B5C');
+    registerCompensation();
+  }
+}
+
+function drawTag(pos, text, color){
+  const dpr = devicePixelRatio;
+  ctx.save();
+  ctx.translate(pos.x, pos.y);
+  ctx.scale(-1,1); // un-mirror text
+  ctx.font = `${11*dpr}px 'DM Mono', monospace`;
+  const w = ctx.measureText(text).width + 16*dpr, h = 22*dpr;
+  ctx.fillStyle = 'rgba(10,10,10,.72)';
+  ctx.strokeStyle = color; ctx.lineWidth = 1*dpr;
+  roundRect(-w/2, -h-10*dpr, w, h, 7*dpr); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color === '#FF3B5C' ? '#FF8CA0' : '#fff';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text, 0, -h/2-10*dpr);
+  ctx.restore();
+}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+
+/* ================= math ================= */
+function jointAngle(lms, J){
+  const [a,b,c] = J.pts;
+  if((lms[a].visibility??1)<.5||(lms[b].visibility??1)<.5||(lms[c].visibility??1)<.5) return null;
+  const v1={x:lms[a].x-lms[b].x,y:lms[a].y-lms[b].y}, v2={x:lms[c].x-lms[b].x,y:lms[c].y-lms[b].y};
+  const dot=v1.x*v2.x+v1.y*v2.y, m=Math.hypot(v1.x,v1.y)*Math.hypot(v2.x,v2.y);
+  if(m===0) return null;
+  let deg = Math.acos(Math.min(1,Math.max(-1,dot/m)))*180/Math.PI;
+  if(J.mode==='flex') deg = 180 - deg; // flexion: 0 = straight
+  return deg;
+}
+function pelvisTilt(lms){
+  if((lms[23].visibility??1)<.5||(lms[24].visibility??1)<.5) return null;
+  const dy = lms[23].y-lms[24].y, dx = lms[23].x-lms[24].x;
+  return Math.abs(Math.atan2(dy,dx)*180/Math.PI);
+}
+
+/* ================= live metrics ================= */
+function updateLive(ang){
+  const J = JOINTS[currentJoint];
+  const pct = Math.min(100, ang/J.norm*100);
+  $('arc-cur').setAttribute('stroke-dasharray', `${pct*0.75} ${100-pct*0.75}`);
+  $('arc-val').textContent = Math.round(ang)+'°';
+  $('arc-lab').textContent = J.label;
+
+  // smoothness buffer
+  const now = performance.now();
+  if(lastAngleTs){
+    const vel = Math.abs(ang - (lastAngles.at(-1)??ang)) / ((now-lastAngleTs)/1000);
+    lastAngles.push(ang);
+    if(lastAngles.length>60) lastAngles.shift();
+    if(session){
+      session.velBuf.push(vel);
+      if(session.velBuf.length>300) session.velBuf.shift();
+    }
+  }
+  lastAngleTs = now;
+
+  if(session){
+    session.min = Math.min(session.min, ang);
+    session.max = Math.max(session.max, ang);
+    const rom = session.max - session.min;
+    $('m-rom').innerHTML = Math.round(rom)+'<small>°</small>';
+    $('m-max').innerHTML = Math.round(session.max)+'<small>°</small>';
+    const maxPct = Math.min(100, session.max/J.norm*100);
+    $('arc-max').setAttribute('stroke-dasharray', `${maxPct*0.75} ${100-maxPct*0.75}`);
+    const s = smoothness(session.velBuf);
+    $('m-smooth').innerHTML = s+'<small>%</small>';
+    $('m-smooth').style.color = s>=85?'var(--good)':s>=70?'var(--warn)':'var(--deficit)';
+    $('rectime').textContent = fmtTime((Date.now()-session.start)/1000);
+  }
+}
+function smoothness(buf){
+  if(buf.length<10) return 100;
+  const m = buf.reduce((a,b)=>a+b,0)/buf.length;
+  if(m===0) return 100;
+  const sd = Math.sqrt(buf.reduce((a,b)=>a+(b-m)**2,0)/buf.length);
+  return Math.max(0, Math.min(100, Math.round(100 - (sd/m)*38)));
+}
+function registerCompensation(){
+  if(!session) return;
+  const now = Date.now();
+  if(now - session.lastCompAt < 1500) return;
+  session.lastCompAt = now;
+  session.comps++;
+  $('m-comp').textContent = session.comps;
+  if(navigator.vibrate) navigator.vibrate(80);
+  toast('⚠ 偵測到骨盆代償——收緊核心，幅度可以細啲');
+}
+
+function setPoseState(n){
+  const locked = n >= 24;
+  if(locked !== poseLocked){
+    poseLocked = locked;
+    $('sessionbtn').disabled = !locked && !session;
+  }
+  $('posedot').style.background = locked ? 'var(--good)' : 'var(--warn)';
+  $('posetext').textContent = locked ? `POSE LOCKED · ${n}/33` : (n>0?'RE-ACQUIRING':'NO POSE');
+}
+
+/* ================= session ================= */
+$('sessionbtn').onclick = () => session ? endSession() : startSession();
+
+function startSession(){
+  session = { start:Date.now(), joint:currentJoint, min:Infinity, max:-Infinity, velBuf:[], comps:0, lastCompAt:0 };
+  $('sessionbtn').textContent = '結束評估';
+  $('sessionbtn').classList.add('stop');
+  $('recchip').style.display = 'inline-flex';
+  $('m-comp').textContent = '0';
+}
+function endSession(){
+  if(session.max === -Infinity){ session=null; resetSessionUI(); return; }
+  const rec = {
+    date: new Date().toISOString(),
+    joint: session.joint,
+    rom: Math.round(session.max - session.min),
+    max: Math.round(session.max),
+    smooth: smoothness(session.velBuf),
+    comps: session.comps,
+    dur: Math.round((Date.now()-session.start)/1000)
+  };
+  const all = loadSessions(); 
+  const prev = [...all].reverse().find(s=>s.joint===rec.joint);
+  all.push(rec); saveSessions(all);
+  showResult(rec, prev);
+  session = null; resetSessionUI(); renderProgress();
+}
+function resetSessionUI(){
+  $('sessionbtn').textContent = '開始評估';
+  $('sessionbtn').classList.remove('stop');
+  $('recchip').style.display = 'none';
+  $('m-rom').innerHTML = '--<small>°</small>';
+  $('m-max').innerHTML = '--<small>°</small>';
+  $('m-smooth').innerHTML = '--<small>%</small>';
+  $('arc-max').setAttribute('stroke-dasharray','0 100');
+}
+function showResult(rec, prev){
+  $('r-title').textContent = JOINTS[rec.joint].label + ' 評估結果';
+  $('r-rom').textContent = rec.rom+'°';
+  $('r-smooth').textContent = rec.smooth+'%';
+  $('r-comp').textContent = rec.comps;
+  $('r-comp').style.color = rec.comps===0?'var(--good)':'var(--warn)';
+  if(prev){
+    const d = rec.rom - prev.rom;
+    $('r-delta').textContent = (d>=0?'+':'')+d+'°';
+    $('r-delta').style.color = d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)';
+  }else{
+    $('r-delta').textContent = '首次'; $('r-delta').style.color='var(--muted)';
+  }
+  $('resultmodal').classList.add('show');
+}
+$('r-close').onclick = ()=> $('resultmodal').classList.remove('show');
+
+/* ================= storage ================= */
+function loadSessions(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||[] }catch{ return [] } }
+function saveSessions(s){ localStorage.setItem(STORE_KEY, JSON.stringify(s)) }
+
+/* ================= joint strip ================= */
+function buildJointStrip(){
+  const strip = $('jointstrip');
+  for(const [k,j] of Object.entries(JOINTS)){
+    const el = document.createElement('div');
+    el.className = 'jchip'+(k===currentJoint?' on':'');
+    el.textContent = j.label;
+    el.onclick = ()=>{
+      if(session){ toast('評估進行中，結束後先可以轉關節'); return; }
+      currentJoint = k;
+      document.querySelectorAll('.jchip').forEach(c=>c.classList.remove('on'));
+      el.classList.add('on');
+    };
+    strip.appendChild(el);
+  }
+}
+
+/* ================= progress view ================= */
+function renderProgress(){
+  const all = loadSessions();
+  const box = $('pgcontent');
+  if(all.length===0){
+    box.innerHTML = `<div class="empty"><div class="ic">◎</div>未有評估記錄<br>去「評估」tab做第一次測量</div>`;
+    return;
+  }
+  // group: latest joint trend
+  const latestJoint = all.at(-1).joint;
+  const series = all.filter(s=>s.joint===latestJoint).slice(-8);
+  const first = series[0], last = series.at(-1);
+  const delta = last.rom - first.rom;
+  const maxRom = Math.max(...series.map(s=>s.rom), 1);
+
+  let bars = series.map(s=>{
+    const h = Math.max(8, s.rom/maxRom*100);
+    return `<div class="bar" style="height:100%"><span>${s.rom}°</span><i style="height:${h}%"></i></div>`;
+  }).join('');
+
+  let rows = [...all].reverse().slice(0,12).map((s,i,arr)=>{
+    const prev = all.slice(0, all.length-1-i).reverse().find(p=>p.joint===s.joint);
+    const d = prev ? s.rom - prev.rom : null;
+    const dHtml = d===null ? `<div class="delta" style="color:var(--muted)">首次</div>`
+      : `<div class="delta" style="color:${d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)'}">${d>=0?'+':''}${d}°</div>`;
+    const dt = new Date(s.date);
+    return `<div class="log-row">
+      <div class="d">${dt.getDate()}/${dt.getMonth()+1}</div>
+      <div><div class="what">${JOINTS[s.joint].label} · ROM ${s.rom}°</div>
+      <div class="sub">smoothness ${s.smooth}% · 代償 ×${s.comps} · ${fmtTime(s.dur)}</div></div>
+      ${dHtml}</div>`;
+  }).join('');
+
+  box.innerHTML = `
+    <div class="big-delta">
+      <div class="v">${delta>=0?'+':''}${delta}°<em style="color:${delta>0?'var(--good)':delta<0?'var(--deficit)':'var(--muted)'}">${delta>0?'▲':delta<0?'▼':'—'}</em></div>
+      <div class="l">${JOINTS[latestJoint].label} ROM 變化 · ${series.length} 次記錄</div>
+    </div>
+    <div class="trend">${bars}</div>
+    <div class="sec-head"><h3>評估記錄</h3><a id="clearbtn">清除全部</a></div>
+    ${rows}`;
+  const cb = $('clearbtn');
+  if(cb) cb.onclick = ()=>{ if(confirm('確定清除全部記錄？')){ localStorage.removeItem(STORE_KEY); renderProgress(); } };
+}
+
+/* ================= misc ================= */
+let toastTimer;
+function toast(msg){
+  const t = $('toast'); t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+}
+function fmtTime(s){ s=Math.floor(s); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0') }
+
+/* tabs */
+document.querySelectorAll('.tab').forEach(t=>{
+  t.onclick = ()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
+    t.classList.add('active');
+    $(t.dataset.v).classList.add('on');
+    if(t.dataset.v==='progress') renderProgress();
+  };
+});
+</script>
+</body>
+</html>
