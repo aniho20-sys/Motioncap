@@ -60,6 +60,15 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 .session-btn{margin-top:12px;width:100%;border:none;border-radius:13px;padding:14px;font-family:'Inter';font-size:15px;font-weight:700;background:var(--orange);color:#0A0A0A;cursor:pointer}
 .session-btn.stop{background:var(--deficit);color:#fff}
 .session-btn:disabled{background:var(--surface2);color:var(--muted)}
+.drawer.min .modechips,.drawer.min .drawer-row,.drawer.min .session-btn{display:none}
+.minirow{display:none;align-items:center;gap:16px;padding-bottom:4px}
+.drawer.min .minirow{display:flex}
+.minirow .mv{font-family:var(--mono);font-size:17px}
+.minirow .ml{font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.minirow button{margin-left:auto;border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:13px;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
+.minirow button.stop{background:var(--deficit);color:#fff}
+.minirow button:disabled{background:var(--surface2);color:var(--muted)}
+#grabzone{padding:8px 0 4px;margin:-8px 0 0;cursor:pointer}
 
 #startgate{position:absolute;inset:0;z-index:10;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
 #startgate .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--orange);text-transform:uppercase}
@@ -135,6 +144,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
     <div class="hud-top">
       <div class="hud-left">
         <span class="chip clickable" id="clientchip">👤 <span id="clientname">未指定客戶</span> ▾</span>
+        <span class="chip clickable" id="flipchip">↺ 鏡頭</span>
         <span class="chip" id="recchip" style="display:none"><span class="dot blink" style="background:var(--deficit)"></span><span id="rectime">00:00</span></span>
       </div>
       <span class="chip" id="posechip"><span class="dot" id="posedot" style="background:var(--muted)"></span><span id="posetext">INITIALISING</span></span>
@@ -142,8 +152,14 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 
     <div class="joint-strip" id="jointstrip"></div>
 
-    <div class="drawer">
-      <div class="grab"></div>
+    <div class="drawer" id="drawer">
+      <div id="grabzone"><div class="grab"></div></div>
+      <div class="minirow">
+        <div><div class="mv" id="mini-val">--</div><div class="ml" id="mini-lab">VALUE</div></div>
+        <div><div class="mv" id="mini-smooth">--%</div><div class="ml">Smooth</div></div>
+        <div><div class="mv" id="mini-comp" style="color:var(--warn)">0</div><div class="ml">代償</div></div>
+        <button id="minibtn" disabled>開始</button>
+      </div>
       <div class="modechips">
         <div class="mchip on" data-m="rom">ROM 評估</div>
         <div class="mchip" data-m="cars">CARs 引導</div>
@@ -247,6 +263,7 @@ const CUR_CLIENT_KEY = 'md_client_current';
 /* ================= state ================= */
 let landmarker=null, video, canvas, ctx;
 let running=false, lastTs=-1;
+let facing='user', mirrored=true;
 let currentJoint='hip_r';
 let appMode='rom';                 // 'rom' | 'cars'
 let session=null;
@@ -277,11 +294,8 @@ $('launchbtn').onclick = async () => {
     });
     st.textContent = '開啟鏡頭中…';
     video = $('video');
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio:false });
-    video.srcObject = stream;
-    await new Promise(r => video.onloadedmetadata = r);
-    video.play();
     canvas = $('overlay'); ctx = canvas.getContext('2d');
+    await startStream(facing);
     resize(); window.addEventListener('resize', resize);
     $('startgate').style.display='none';
     running = true;
@@ -290,6 +304,31 @@ $('launchbtn').onclick = async () => {
     st.textContent = e.name==='NotAllowedError'
       ? '鏡頭權限被拒絕——請喺browser設定開返再reload'
       : '初始化失敗：'+(e.message||e);
+  }
+};
+
+async function startStream(f){
+  if(video.srcObject) video.srcObject.getTracks().forEach(t=>t.stop());
+  const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:f, width:{ideal:1280}, height:{ideal:720} }, audio:false });
+  video.srcObject = stream;
+  await new Promise(r => video.onloadedmetadata = r);
+  video.play();
+  mirrored = (f==='user');
+  const tf = mirrored ? 'scaleX(-1)' : 'none';
+  video.style.transform = tf;
+  canvas.style.transform = tf;
+}
+
+$('flipchip').onclick = async ()=>{
+  if(!running) return;
+  if(session){ toast('進行中，結束後先轉鏡頭'); return; }
+  const next = facing==='user' ? 'environment' : 'user';
+  try{
+    await startStream(next);
+    facing = next;
+  }catch(e){
+    toast('轉唔到鏡頭——呢部機可能冇後置可用');
+    await startStream(facing);
   }
 };
 
@@ -417,12 +456,15 @@ function updateCarsLive(J){
   $('arc-cur').setAttribute('stroke-dasharray', `${pct*0.75} ${100-pct*0.75}`);
   $('arc-val').textContent = pct+'%';
   $('arc-lab').textContent = J.label+' CARS';
+  $('mini-val').textContent = pct+'%';
+  $('mini-lab').textContent = J.label+' CARs';
   $('m-a').innerHTML = pct+'<small>%</small>';
   $('m-b').innerHTML = compSegs;
   $('m-b').style.color = compSegs? 'var(--deficit)':'var(--good)';
   const s = smoothness(session.velBuf);
   $('m-smooth').innerHTML = s+'<small>%</small>';
   $('m-smooth').style.color = s>=85?'var(--good)':s>=70?'var(--warn)':'var(--deficit)';
+  $('mini-smooth').textContent = s+'%';
 }
 
 /* ================= ROM mode ================= */
@@ -431,6 +473,8 @@ function updateRomLive(ang, J){
   $('arc-cur').setAttribute('stroke-dasharray', `${pct*0.75} ${100-pct*0.75}`);
   $('arc-val').textContent = Math.round(ang)+'°';
   $('arc-lab').textContent = J.label;
+  $('mini-val').textContent = Math.round(ang)+'°';
+  $('mini-lab').textContent = J.label;
 
   const now = performance.now();
   if(lastAngleTs && session && session.type==='rom'){
@@ -451,6 +495,7 @@ function updateRomLive(ang, J){
     const s = smoothness(session.velBuf);
     $('m-smooth').innerHTML = s+'<small>%</small>';
     $('m-smooth').style.color = s>=85?'var(--good)':s>=70?'var(--warn)':'var(--deficit)';
+    $('mini-smooth').textContent = s+'%';
   }
 }
 
@@ -480,7 +525,7 @@ function smoothness(buf){
 /* ================= drawing helpers ================= */
 function drawTag(pos,text,color){
   const dpr=devicePixelRatio;
-  ctx.save(); ctx.translate(pos.x,pos.y); ctx.scale(-1,1);
+  ctx.save(); ctx.translate(pos.x,pos.y); if(mirrored) ctx.scale(-1,1);
   ctx.font=`${11*dpr}px 'DM Mono', monospace`;
   const w=ctx.measureText(text).width+16*dpr, h=22*dpr;
   ctx.fillStyle='rgba(10,10,10,.72)'; ctx.strokeStyle=color; ctx.lineWidth=1*dpr;
@@ -499,6 +544,7 @@ function registerCompensation(){
   if(now-session.lastCompAt<1500) return;
   session.lastCompAt=now; session.comps++;
   $('m-comp').textContent=session.comps;
+  $('mini-comp').textContent=session.comps;
   if(navigator.vibrate) navigator.vibrate(80);
   toast('⚠ 偵測到骨盆代償——收緊核心，幅度可以細啲');
 }
@@ -511,14 +557,18 @@ function setPoseState(n, jointVisible){
   $('posetext').textContent = locked?`POSE LOCKED · ${n}/33`:(n>0?'RE-ACQUIRING':'NO POSE');
   if(!session){
     $('sessionbtn').disabled = !locked;
+    $('minibtn').disabled = !locked;
     $('sessionbtn').textContent = locked
       ? (appMode==='cars'?'開始CARs':'開始評估')
       : '等待偵測 · 目標關節要入鏡';
+    $('minibtn').textContent = locked?'開始':'等偵測';
   }
 }
+$('grabzone').onclick = ()=> $('drawer').classList.toggle('min');
 
 /* ================= session ================= */
 $('sessionbtn').onclick = ()=> session ? endSession() : startSession();
+$('minibtn').onclick = ()=> session ? endSession() : startSession();
 
 function startSession(){
   lastTheta=null;
@@ -531,8 +581,10 @@ function startSession(){
   };
   $('sessionbtn').textContent='結束'+(appMode==='cars'?'CARs':'評估');
   $('sessionbtn').classList.add('stop');
+  $('minibtn').textContent='結束'; $('minibtn').classList.add('stop');
   $('recchip').style.display='inline-flex';
-  $('m-comp').textContent='0';
+  $('m-comp').textContent='0'; $('mini-comp').textContent='0';
+  $('drawer').classList.add('min'); // 自動縮埋，畫面還返俾鏡頭
 }
 function endSession(){
   const isCars = session.type==='cars';
@@ -560,10 +612,13 @@ function endSession(){
 }
 function resetSessionUI(){
   $('sessionbtn').classList.remove('stop');
+  $('minibtn').classList.remove('stop');
   $('recchip').style.display='none';
   $('m-a').innerHTML='--<small>°</small>'; $('m-b').innerHTML='--<small>°</small>';
   $('m-smooth').innerHTML='--<small>%</small>';
+  $('mini-val').textContent='--'; $('mini-smooth').textContent='--%';
   $('arc-max').setAttribute('stroke-dasharray','0 100');
+  $('drawer').classList.remove('min');
   setPoseState(poseLocked?18:0, poseLocked);
 }
 
