@@ -277,7 +277,9 @@ function draw(res){
   ctx.clearRect(0,0,canvas.width,canvas.height);
   const lms = res.landmarks && res.landmarks[0];
   const visCount = lms ? lms.filter(l=>(l.visibility??1)>.5).length : 0;
-  setPoseState(visCount);
+  const Jv = JOINTS[currentJoint];
+  const jointVisible = !!lms && Jv.pts.every(i=>(lms[i].visibility??1)>.5);
+  setPoseState(visCount, jointVisible);
   if(!lms){ return; }
 
   const P = lms.map(vidToCanvas);
@@ -404,14 +406,15 @@ function registerCompensation(){
   toast('⚠ 偵測到骨盆代償——收緊核心，幅度可以細啲');
 }
 
-function setPoseState(n){
-  const locked = n >= 24;
-  if(locked !== poseLocked){
-    poseLocked = locked;
-    $('sessionbtn').disabled = !locked && !session;
-  }
+function setPoseState(n, jointVisible){
+  const locked = n >= 18 || jointVisible;
+  poseLocked = locked;
   $('posedot').style.background = locked ? 'var(--good)' : 'var(--warn)';
   $('posetext').textContent = locked ? `POSE LOCKED · ${n}/33` : (n>0?'RE-ACQUIRING':'NO POSE');
+  if(!session){
+    $('sessionbtn').disabled = !locked;
+    $('sessionbtn').textContent = locked ? '開始評估' : '等待偵測 · 目標關節要入鏡';
+  }
 }
 
 /* ================= session ================= */
