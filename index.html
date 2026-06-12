@@ -32,8 +32,8 @@ body{background:var(--ink);color:var(--text);font-family:'Inter',sans-serif;-web
 /* ===== assess ===== */
 #assess{position:relative;padding:0;background:#000}
 .stage{position:absolute;inset:0;overflow:hidden}
-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
-#overlay{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1)}
+video{position:absolute;visibility:hidden;width:2px;height:2px}
+#overlay{position:absolute;inset:0;width:100%;height:100%}
 .hud-top{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
 .hud-left{display:flex;gap:8px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
@@ -48,9 +48,10 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 .jchip.on{background:var(--orange);color:#0A0A0A;border-color:var(--orange);font-weight:500}
 
 .drawer{position:absolute;left:0;right:0;bottom:64px;background:rgba(14,14,14,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:10px 18px 16px;z-index:6}
-.grab{width:42px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 10px}
-.modechips{display:flex;gap:8px;margin-bottom:12px}
-.mchip{flex:1;text-align:center;font-family:var(--mono);font-size:12px;padding:9px 0;border-radius:11px;border:1px solid var(--line);color:var(--muted);cursor:pointer}
+.grab{width:42px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto}
+#grabzone{padding:0 0 10px;cursor:pointer}
+.modechips{display:flex;gap:7px;margin-bottom:12px}
+.mchip{flex:1;text-align:center;font-family:var(--mono);font-size:11.5px;padding:9px 0;border-radius:11px;border:1px solid var(--line);color:var(--muted);cursor:pointer}
 .mchip.on{background:var(--orange-soft);border-color:var(--orange);color:var(--orange);font-weight:500}
 .drawer-row{display:flex;align-items:center;gap:14px}
 .metrics{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
@@ -68,7 +69,6 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 .minirow button{margin-left:auto;border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:13px;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
 .minirow button.stop{background:var(--deficit);color:#fff}
 .minirow button:disabled{background:var(--surface2);color:var(--muted)}
-#grabzone{padding:8px 0 4px;margin:-8px 0 0;cursor:pointer}
 
 #startgate{position:absolute;inset:0;z-index:10;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
 #startgate .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--orange);text-transform:uppercase}
@@ -119,7 +119,8 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 .rg{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:13px}
 .rg .v{font-family:var(--mono);font-size:23px}
 .rg .l{font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:.1em;margin-top:3px;text-transform:uppercase}
-.sheet .close{margin-top:18px;width:100%;border:none;border-radius:13px;padding:15px;font-size:14px;font-weight:700;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
+.sheet .close{margin-top:12px;width:100%;border:none;border-radius:13px;padding:15px;font-size:14px;font-weight:700;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
+.sheet .secondary{background:var(--surface2);color:var(--text);border:1px solid var(--line)}
 .clock-map{display:flex;justify-content:center;margin:16px 0 4px}
 .client-row{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer}
 .client-row .av{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:600;font-size:13px;color:var(--orange)}
@@ -162,6 +163,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
       </div>
       <div class="modechips">
         <div class="mchip on" data-m="rom">ROM 評估</div>
+        <div class="mchip" data-m="sym">雙側對比</div>
         <div class="mchip" data-m="cars">CARs 引導</div>
       </div>
       <div class="drawer-row">
@@ -217,10 +219,11 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
     <div class="result-grid">
       <div class="rg"><div class="v" id="r-1">--</div><div class="l" id="r-1l">ROM</div></div>
       <div class="rg"><div class="v" id="r-2">--</div><div class="l" id="r-2l">對上次</div></div>
-      <div class="rg"><div class="v" id="r-3">--</div><div class="l">Smoothness</div></div>
-      <div class="rg"><div class="v" id="r-4">--</div><div class="l">代償</div></div>
+      <div class="rg"><div class="v" id="r-3">--</div><div class="l" id="r-3l">Smoothness</div></div>
+      <div class="rg"><div class="v" id="r-4">--</div><div class="l" id="r-4l">代償</div></div>
     </div>
     <div class="clock-map" id="clockmap"></div>
+    <button class="close secondary" id="savevid" style="display:none">⬇ 儲存影片（連骨架）</button>
     <button class="close" id="r-close">完成</button>
   </div>
 </div>
@@ -235,7 +238,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
       <input id="newclient" placeholder="新客戶名…" maxlength="24">
       <button id="addclient">加入</button>
     </div>
-    <button class="close" id="c-close" style="background:var(--surface2);color:var(--text)">關閉</button>
+    <button class="close secondary" id="c-close">關閉</button>
   </div>
 </div>
 
@@ -255,23 +258,24 @@ const JOINTS = {
 };
 const CONNECTIONS = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
 const PELVIS_TILT_LIMIT = 5;
-const SEGS = 24;            // CARs ring segments (15° each)
-const STORE_KEY = 'md_sessions_v1';
-const CLIENT_KEY = 'md_clients_v1';
-const CUR_CLIENT_KEY = 'md_client_current';
+const SEGS = 24;
+const STORE_KEY='md_sessions_v1', CLIENT_KEY='md_clients_v1', CUR_CLIENT_KEY='md_client_current';
 
 /* ================= state ================= */
 let landmarker=null, video, canvas, ctx;
 let running=false, lastTs=-1;
 let facing='user', mirrored=true;
 let currentJoint='hip_r';
-let appMode='rom';                 // 'rom' | 'cars'
+let appMode='rom';                 // 'rom' | 'sym' | 'cars'
 let session=null;
 let lastAngles=[], lastAngleTs=0, lastTheta=null;
 let poseLocked=false;
 let pgFilter='all';
+let recorder=null, recChunks=[], recBlob=null, recMime='';
 
 const $ = id => document.getElementById(id);
+const baseOf = k => k.replace(/_(r|l)$/,'');
+const pairLabel = b => JOINTS[b+'_r'].label.slice(1);
 
 /* ================= boot ================= */
 buildJointStrip();
@@ -314,22 +318,14 @@ async function startStream(f){
   await new Promise(r => video.onloadedmetadata = r);
   video.play();
   mirrored = (f==='user');
-  const tf = mirrored ? 'scaleX(-1)' : 'none';
-  video.style.transform = tf;
-  canvas.style.transform = tf;
 }
 
 $('flipchip').onclick = async ()=>{
   if(!running) return;
   if(session){ toast('進行中，結束後先轉鏡頭'); return; }
   const next = facing==='user' ? 'environment' : 'user';
-  try{
-    await startStream(next);
-    facing = next;
-  }catch(e){
-    toast('轉唔到鏡頭——呢部機可能冇後置可用');
-    await startStream(facing);
-  }
+  try{ await startStream(next); facing = next; }
+  catch(e){ toast('轉唔到鏡頭——呢部機可能冇後置可用'); await startStream(facing); }
 };
 
 function resize(){
@@ -338,7 +334,7 @@ function resize(){
   canvas.height = r.height*devicePixelRatio;
 }
 
-/* ================= loop ================= */
+/* ================= loop & render ================= */
 function loop(){
   if(!running) return;
   if(video.currentTime !== lastTs){
@@ -349,28 +345,55 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
+function drawVideoFrame(){
+  const cw=canvas.width, ch=canvas.height, vw=video.videoWidth, vh=video.videoHeight;
+  if(!vw||!vh){ ctx.fillStyle='#000'; ctx.fillRect(0,0,cw,ch); return; }
+  const scale=Math.max(cw/vw, ch/vh);
+  const dw=vw*scale, dh=vh*scale, ox=(cw-dw)/2, oy=(ch-dh)/2;
+  ctx.save();
+  if(mirrored){ ctx.translate(cw,0); ctx.scale(-1,1); }
+  ctx.drawImage(video, ox, oy, dw, dh);
+  ctx.restore();
+}
+
 function vidToCanvas(lm){
-  const cw=canvas.width, ch=canvas.height;
-  const vw=video.videoWidth, vh=video.videoHeight;
+  const cw=canvas.width, ch=canvas.height, vw=video.videoWidth, vh=video.videoHeight;
   const scale=Math.max(cw/vw, ch/vh);
   const ox=(cw-vw*scale)/2, oy=(ch-vh*scale)/2;
-  return { x:lm.x*vw*scale+ox, y:lm.y*vh*scale+oy };
+  let x = lm.x*vw*scale+ox;
+  if(mirrored) x = cw - x;
+  return { x, y: lm.y*vh*scale+oy };
 }
 
 function draw(res){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawVideoFrame();
   const lms = res.landmarks && res.landmarks[0];
   const visCount = lms ? lms.filter(l=>(l.visibility??1)>.5).length : 0;
   const J = JOINTS[currentJoint];
-  const jointVisible = !!lms && J.pts.every(i=>(lms[i].visibility??1)>.5);
+  let jointVisible = false;
+  if(lms){
+    if(appMode==='sym'){
+      const b=baseOf(currentJoint);
+      jointVisible = JOINTS[b+'_r'].pts.every(i=>(lms[i].visibility??1)>.5)
+                  || JOINTS[b+'_l'].pts.every(i=>(lms[i].visibility??1)>.5);
+    }else{
+      jointVisible = J.pts.every(i=>(lms[i].visibility??1)>.5);
+    }
+  }
   setPoseState(visCount, jointVisible);
   if(!lms) return;
 
   const P = lms.map(vidToCanvas);
   const dpr = devicePixelRatio;
-
   const tilt = pelvisTilt(lms);
   const pelvisBad = tilt!==null && tilt>PELVIS_TILT_LIMIT;
+
+  // active joint dots
+  const activeMids = new Set();
+  if(appMode==='sym'){
+    const b=baseOf(currentJoint);
+    activeMids.add(JOINTS[b+'_r'].pts[1]); activeMids.add(JOINTS[b+'_l'].pts[1]);
+  }else activeMids.add(J.pts[1]);
 
   // skeleton
   ctx.lineWidth=2.5*dpr; ctx.lineCap='round';
@@ -381,7 +404,7 @@ function draw(res){
   }
   for(const i of new Set(CONNECTIONS.flat())){
     if((lms[i].visibility??1)<.4) continue;
-    const isActive = i===J.pts[1];
+    const isActive = activeMids.has(i);
     ctx.beginPath(); ctx.arc(P[i].x,P[i].y,(isActive?6:4.5)*dpr,0,Math.PI*2);
     ctx.fillStyle = isActive?'#FF5C00':'#0A0A0A';
     ctx.fill(); ctx.lineWidth=2.5*dpr; ctx.strokeStyle='#FF5C00'; ctx.stroke();
@@ -389,6 +412,17 @@ function draw(res){
 
   if(appMode==='cars'){
     drawCars(lms, P, J, pelvisBad, dpr);
+  }else if(appMode==='sym'){
+    const b=baseOf(currentJoint);
+    const JR=JOINTS[b+'_r'], JL=JOINTS[b+'_l'];
+    const aR=jointAngle(lms,JR), aL=jointAngle(lms,JL);
+    if(aR!==null) drawTag(P[JR.pts[1]], 'R '+Math.round(aR)+'°', '#FF5C00');
+    if(aL!==null) drawTag(P[JL.pts[1]], 'L '+Math.round(aL)+'°', '#FF5C00');
+    if(session && session.type==='sym') updateSymLive(aR, aL);
+    else if(aR!==null||aL!==null){
+      $('arc-val').textContent = Math.round(aR??aL)+'°';
+      $('arc-lab').textContent = pairLabel(b)+' 雙側';
+    }
   }else{
     const ang = jointAngle(lms, J);
     if(ang!==null){
@@ -405,7 +439,7 @@ function draw(res){
   if(session) $('rectime').textContent = fmtTime((Date.now()-session.start)/1000);
 }
 
-/* ================= CARs mode ================= */
+/* ================= CARs ================= */
 function drawCars(lms, P, J, pelvisBad, dpr){
   if(!J.pts.every(i=>(lms[i].visibility??1)>.5)) return;
   const c = P[J.pts[1]], d = P[J.pts[2]];
@@ -414,10 +448,8 @@ function drawCars(lms, P, J, pelvisBad, dpr){
   const theta = (Math.atan2(d.y-c.y, d.x-c.x)*180/Math.PI + 360) % 360;
   const seg = Math.floor(theta/(360/SEGS));
 
-  // record coverage
   if(session && session.type==='cars'){
     session.segs[seg] = pelvisBad ? 2 : Math.max(session.segs[seg], 1);
-    // angular velocity for smoothness
     const now = performance.now();
     if(lastTheta!==null && lastAngleTs){
       let dT = theta-lastTheta;
@@ -431,7 +463,6 @@ function drawCars(lms, P, J, pelvisBad, dpr){
     updateCarsLive(J);
   }
 
-  // guide ring
   const segArc = Math.PI*2/SEGS;
   for(let i=0;i<SEGS;i++){
     const st = session?.segs?.[i] ?? 0;
@@ -441,7 +472,6 @@ function drawCars(lms, P, J, pelvisBad, dpr){
     ctx.strokeStyle = st===2 ? '#FF3B5C' : st===1 ? '#FF5C00' : 'rgba(255,255,255,.18)';
     ctx.stroke();
   }
-  // moving dot
   const dot = { x:c.x+Math.cos(theta*Math.PI/180)*r, y:c.y+Math.sin(theta*Math.PI/180)*r };
   ctx.beginPath(); ctx.arc(dot.x, dot.y, 8*dpr, 0, Math.PI*2);
   ctx.fillStyle='#FF5C00'; ctx.fill();
@@ -461,13 +491,10 @@ function updateCarsLive(J){
   $('m-a').innerHTML = pct+'<small>%</small>';
   $('m-b').innerHTML = compSegs;
   $('m-b').style.color = compSegs? 'var(--deficit)':'var(--good)';
-  const s = smoothness(session.velBuf);
-  $('m-smooth').innerHTML = s+'<small>%</small>';
-  $('m-smooth').style.color = s>=85?'var(--good)':s>=70?'var(--warn)':'var(--deficit)';
-  $('mini-smooth').textContent = s+'%';
+  setSmoothUI(smoothness(session.velBuf));
 }
 
-/* ================= ROM mode ================= */
+/* ================= ROM single ================= */
 function updateRomLive(ang, J){
   const pct = Math.min(100, ang/J.norm*100);
   $('arc-cur').setAttribute('stroke-dasharray', `${pct*0.75} ${100-pct*0.75}`);
@@ -492,11 +519,44 @@ function updateRomLive(ang, J){
     $('m-b').innerHTML = Math.round(session.max)+'<small>°</small>';
     const maxPct = Math.min(100, session.max/J.norm*100);
     $('arc-max').setAttribute('stroke-dasharray', `${maxPct*0.75} ${100-maxPct*0.75}`);
-    const s = smoothness(session.velBuf);
-    $('m-smooth').innerHTML = s+'<small>%</small>';
-    $('m-smooth').style.color = s>=85?'var(--good)':s>=70?'var(--warn)':'var(--deficit)';
-    $('mini-smooth').textContent = s+'%';
+    setSmoothUI(smoothness(session.velBuf));
   }
+}
+
+/* ================= SYM bilateral ================= */
+function updateSymLive(aR, aL){
+  const s = session;
+  const now = performance.now();
+  const ref = aR ?? aL;
+  if(ref!==null && lastAngleTs){
+    const vel = Math.abs(ref-(lastAngles.at(-1)??ref))/((now-lastAngleTs)/1000);
+    s.velBuf.push(vel); if(s.velBuf.length>300) s.velBuf.shift();
+  }
+  if(ref!==null){ lastAngles.push(ref); if(lastAngles.length>60) lastAngles.shift(); lastAngleTs=now; }
+  if(aR!==null){ s.minR=Math.min(s.minR,aR); s.maxR=Math.max(s.maxR,aR); }
+  if(aL!==null){ s.minL=Math.min(s.minL,aL); s.maxL=Math.max(s.maxL,aL); }
+  const romR = s.maxR>-Infinity ? Math.round(s.maxR-s.minR) : null;
+  const romL = s.maxL>-Infinity ? Math.round(s.maxL-s.minL) : null;
+  $('m-a').innerHTML = (romR??'--')+'<small>°</small>';
+  $('m-b').innerHTML = (romL??'--')+'<small>°</small>';
+  let asym = null;
+  if(romR>5 && romL>5) asym = Math.round(Math.abs(romR-romL)/Math.max(romR,romL)*100);
+  const av = asym===null ? '--' : asym+'%';
+  $('arc-val').textContent = av; $('arc-lab').textContent = 'ASYM';
+  $('mini-val').textContent = av; $('mini-lab').textContent = 'ASYM';
+  if(asym!==null){
+    const w = Math.min(asym,100)*0.75;
+    $('arc-cur').setAttribute('stroke-dasharray', `${w} ${100-w}`);
+    $('arc-cur').setAttribute('stroke', asym>15?'#FF3B5C':asym>8?'#FFB020':'#4ADE80');
+    $('mini-val').style.color = asym>15?'var(--deficit)':asym>8?'var(--warn)':'var(--good)';
+  }
+  setSmoothUI(smoothness(s.velBuf));
+}
+
+function setSmoothUI(s){
+  $('m-smooth').innerHTML = s+'<small>%</small>';
+  $('m-smooth').style.color = s>=85?'var(--good)':s>=70?'var(--warn)':'var(--deficit)';
+  $('mini-smooth').textContent = s+'%';
 }
 
 /* ================= math ================= */
@@ -525,7 +585,7 @@ function smoothness(buf){
 /* ================= drawing helpers ================= */
 function drawTag(pos,text,color){
   const dpr=devicePixelRatio;
-  ctx.save(); ctx.translate(pos.x,pos.y); if(mirrored) ctx.scale(-1,1);
+  ctx.save(); ctx.translate(pos.x,pos.y);
   ctx.font=`${11*dpr}px 'DM Mono', monospace`;
   const w=ctx.measureText(text).width+16*dpr, h=22*dpr;
   ctx.fillStyle='rgba(10,10,10,.72)'; ctx.strokeStyle=color; ctx.lineWidth=1*dpr;
@@ -550,6 +610,7 @@ function registerCompensation(){
 }
 
 /* ================= pose state ================= */
+const MODE_NAME = { rom:'評估', sym:'雙側對比', cars:'CARs' };
 function setPoseState(n, jointVisible){
   const locked = n>=18 || jointVisible;
   poseLocked = locked;
@@ -558,13 +619,41 @@ function setPoseState(n, jointVisible){
   if(!session){
     $('sessionbtn').disabled = !locked;
     $('minibtn').disabled = !locked;
-    $('sessionbtn').textContent = locked
-      ? (appMode==='cars'?'開始CARs':'開始評估')
-      : '等待偵測 · 目標關節要入鏡';
+    $('sessionbtn').textContent = locked ? '開始'+MODE_NAME[appMode] : '等待偵測 · 目標關節要入鏡';
     $('minibtn').textContent = locked?'開始':'等偵測';
   }
 }
 $('grabzone').onclick = ()=> $('drawer').classList.toggle('min');
+
+/* ================= recording ================= */
+function startRecording(){
+  recBlob=null; recChunks=[];
+  if(typeof MediaRecorder==='undefined') return;
+  const mimes=['video/mp4','video/webm;codecs=vp9','video/webm'];
+  recMime = mimes.find(m=>{ try{return MediaRecorder.isTypeSupported(m)}catch{return false} }) || '';
+  if(!recMime) return;
+  try{
+    const stream = canvas.captureStream(30);
+    recorder = new MediaRecorder(stream, { mimeType:recMime, videoBitsPerSecond:4000000 });
+    recorder.ondataavailable = e=>{ if(e.data && e.data.size) recChunks.push(e.data) };
+    recorder.start(1000);
+  }catch(e){ recorder=null; }
+}
+function stopRecording(cb){
+  if(!recorder){ cb&&cb(); return; }
+  const r = recorder; recorder=null;
+  r.onstop = ()=>{ if(recChunks.length) recBlob = new Blob(recChunks,{type:recMime}); cb&&cb(); };
+  try{ r.stop(); }catch{ cb&&cb(); }
+}
+$('savevid').onclick = ()=>{
+  if(!recBlob) return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(recBlob);
+  a.download='motioncap-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+(recMime.includes('mp4')?'.mp4':'.webm');
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
+  toast('影片已儲存', true);
+};
 
 /* ================= session ================= */
 $('sessionbtn').onclick = ()=> session ? endSession() : startSession();
@@ -575,41 +664,68 @@ function startSession(){
   session = {
     start:Date.now(), joint:currentJoint, type:appMode,
     min:Infinity, max:-Infinity,
+    minR:Infinity, maxR:-Infinity, minL:Infinity, maxL:-Infinity,
     segs:new Array(SEGS).fill(0),
     velBuf:[], comps:0, lastCompAt:0,
     client: curClient()?.name || null
   };
-  $('sessionbtn').textContent='結束'+(appMode==='cars'?'CARs':'評估');
+  $('sessionbtn').textContent='結束'+MODE_NAME[appMode];
   $('sessionbtn').classList.add('stop');
   $('minibtn').textContent='結束'; $('minibtn').classList.add('stop');
   $('recchip').style.display='inline-flex';
   $('m-comp').textContent='0'; $('mini-comp').textContent='0';
-  $('drawer').classList.add('min'); // 自動縮埋，畫面還返俾鏡頭
+  $('drawer').classList.add('min');
+  startRecording();
 }
+
 function endSession(){
-  const isCars = session.type==='cars';
-  const nothing = isCars ? session.segs.every(s=>s===0) : session.max===-Infinity;
-  if(nothing){ session=null; resetSessionUI(); return; }
-  const rec = {
+  const t = session.type;
+  let nothing=false, rec=null;
+  if(t==='cars') nothing = session.segs.every(s=>s===0);
+  else if(t==='sym') nothing = session.maxR===-Infinity && session.maxL===-Infinity;
+  else nothing = session.max===-Infinity;
+
+  if(t==='sym' && !nothing && (session.maxR===-Infinity || session.maxL===-Infinity)){
+    toast('兩邊關節都要入鏡先做到對比——再嚟一次');
+    nothing=true;
+  }
+  if(nothing){
+    stopRecording();
+    session=null; resetSessionUI(); return;
+  }
+
+  rec = {
     date:new Date().toISOString(),
-    joint:session.joint, type:session.type, client:session.client,
+    joint:session.joint, type:t, client:session.client,
     smooth:smoothness(session.velBuf), comps:session.comps,
     dur:Math.round((Date.now()-session.start)/1000)
   };
-  if(isCars){
+  if(t==='cars'){
     rec.coverage = Math.round(session.segs.filter(s=>s>0).length/SEGS*100);
     rec.compSegs = session.segs.filter(s=>s===2).length;
     rec.segs = session.segs;
+  }else if(t==='sym'){
+    rec.pair = baseOf(session.joint);
+    rec.romR = Math.round(session.maxR-session.minR);
+    rec.romL = Math.round(session.maxL-session.minL);
+    rec.asym = (rec.romR>5&&rec.romL>5)
+      ? Math.round(Math.abs(rec.romR-rec.romL)/Math.max(rec.romR,rec.romL)*100) : null;
   }else{
     rec.rom = Math.round(session.max-session.min);
     rec.max = Math.round(session.max);
   }
   const all = loadSessions();
-  const prev = [...all].reverse().find(s=>s.joint===rec.joint && s.type===rec.type && s.client===rec.client);
+  let prev=null;
+  if(t==='sym') prev=[...all].reverse().find(s=>s.type==='sym'&&s.pair===rec.pair&&s.client===rec.client);
+  else prev=[...all].reverse().find(s=>s.type===t&&s.joint===rec.joint&&s.client===rec.client);
   all.push(rec); saveSessions(all);
+
+  $('savevid').style.display='none';
+  stopRecording(()=>{ if(recBlob) $('savevid').style.display='block'; });
   showResult(rec, prev);
   session=null; resetSessionUI(); renderFilterStrip(); renderProgress();
 }
+
 function resetSessionUI(){
   $('sessionbtn').classList.remove('stop');
   $('minibtn').classList.remove('stop');
@@ -617,34 +733,49 @@ function resetSessionUI(){
   $('m-a').innerHTML='--<small>°</small>'; $('m-b').innerHTML='--<small>°</small>';
   $('m-smooth').innerHTML='--<small>%</small>';
   $('mini-val').textContent='--'; $('mini-smooth').textContent='--%';
+  $('mini-val').style.color='';
   $('arc-max').setAttribute('stroke-dasharray','0 100');
+  $('arc-cur').setAttribute('stroke-dasharray','0 100');
+  $('arc-cur').setAttribute('stroke','#FF5C00');
   $('drawer').classList.remove('min');
   setPoseState(poseLocked?18:0, poseLocked);
 }
 
 /* ================= result / detail ================= */
 function showResult(rec, prev){
-  const J = JOINTS[rec.joint];
   $('r-eyebrow').textContent = (rec.client||'未指定客戶')+' · '+new Date(rec.date).toLocaleDateString('zh-HK');
-  $('r-title').textContent = J.label+(rec.type==='cars'?' CARs結果':' 評估結果');
+  $('clockmap').innerHTML='';
+  $('r-3l').textContent='Smoothness'; $('r-4l').textContent='代償';
+  $('r-3').textContent = rec.smooth+'%'; $('r-3').style.color='';
+  $('r-4').textContent = rec.comps;
+  $('r-4').style.color = rec.comps===0?'var(--good)':'var(--warn)';
+
   if(rec.type==='cars'){
-    $('r-1').textContent = rec.coverage+'%'; $('r-1l').textContent='COVERAGE';
+    $('r-title').textContent = JOINTS[rec.joint].label+' CARs結果';
+    $('r-1').textContent = rec.coverage+'%'; $('r-1l').textContent='COVERAGE'; $('r-1').style.color='';
     $('r-2').textContent = rec.compSegs; $('r-2l').textContent='代償區段';
     $('r-2').style.color = rec.compSegs? 'var(--deficit)':'var(--good)';
-    $('clockmap').innerHTML = clockMapSvg(rec.segs);
+    if(rec.segs) $('clockmap').innerHTML = clockMapSvg(rec.segs);
+  }else if(rec.type==='sym'){
+    $('r-title').textContent = pairLabel(rec.pair)+'關節 雙側對比';
+    $('r-1').textContent = rec.romR+'°'; $('r-1l').textContent='右 ROM'; $('r-1').style.color='';
+    $('r-2').textContent = rec.romL+'°'; $('r-2l').textContent='左 ROM'; $('r-2').style.color='';
+    $('r-3l').textContent='不對稱';
+    if(rec.asym!==null){
+      $('r-3').textContent = rec.asym+'%';
+      $('r-3').style.color = rec.asym>15?'var(--deficit)':rec.asym>8?'var(--warn)':'var(--good)';
+    }else $('r-3').textContent='--';
+    $('clockmap').innerHTML = symBarsSvg(rec.romR, rec.romL);
   }else{
-    $('r-1').textContent = rec.rom+'°'; $('r-1l').textContent='ROM';
-    if(prev){
+    $('r-title').textContent = JOINTS[rec.joint].label+' 評估結果';
+    $('r-1').textContent = rec.rom+'°'; $('r-1l').textContent='ROM'; $('r-1').style.color='';
+    if(prev && prev.rom!==undefined){
       const d = rec.rom-prev.rom;
       $('r-2').textContent=(d>=0?'+':'')+d+'°';
       $('r-2').style.color = d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)';
     }else{ $('r-2').textContent='首次'; $('r-2').style.color='var(--muted)'; }
     $('r-2l').textContent='對上次';
-    $('clockmap').innerHTML='';
   }
-  $('r-3').textContent = rec.smooth+'%';
-  $('r-4').textContent = rec.comps;
-  $('r-4').style.color = rec.comps===0?'var(--good)':'var(--warn)';
   $('resultmodal').classList.add('show');
 }
 $('r-close').onclick = ()=> $('resultmodal').classList.remove('show');
@@ -663,6 +794,19 @@ function clockMapSvg(segs){
     <text x="60" y="70" text-anchor="middle" fill="#8A8580" font-family="DM Mono" font-size="8">紅=代償方位</text></svg>`;
 }
 
+function symBarsSvg(romR, romL){
+  const mx=Math.max(romR,romL,1);
+  const wR=Math.max(6, romR/mx*170), wL=Math.max(6, romL/mx*170);
+  return `<svg width="240" height="66" viewBox="0 0 240 66">
+    <text x="0" y="15" fill="#8A8580" font-family="DM Mono" font-size="11">R</text>
+    <rect x="16" y="4" width="${wR}" height="15" rx="7.5" fill="#FF5C00"/>
+    <text x="${22+wR}" y="16" fill="#F5F2EE" font-family="DM Mono" font-size="11">${romR}°</text>
+    <text x="0" y="50" fill="#8A8580" font-family="DM Mono" font-size="11">L</text>
+    <rect x="16" y="39" width="${wL}" height="15" rx="7.5" fill="rgba(255,92,0,.45)"/>
+    <text x="${22+wL}" y="51" fill="#F5F2EE" font-family="DM Mono" font-size="11">${romL}°</text>
+  </svg>`;
+}
+
 /* ================= clients ================= */
 function loadClients(){ try{ return JSON.parse(localStorage.getItem(CLIENT_KEY))||[] }catch{ return [] } }
 function saveClients(c){ localStorage.setItem(CLIENT_KEY, JSON.stringify(c)) }
@@ -670,9 +814,7 @@ function curClient(){
   const id = localStorage.getItem(CUR_CLIENT_KEY);
   return loadClients().find(c=>c.id===id) || null;
 }
-function renderClientChip(){
-  $('clientname').textContent = curClient()?.name || '未指定客戶';
-}
+function renderClientChip(){ $('clientname').textContent = curClient()?.name || '未指定客戶'; }
 $('clientchip').onclick = ()=>{
   if(session){ toast('評估進行中，結束後先轉客戶'); return; }
   renderClientList(); $('clientmodal').classList.add('show');
@@ -731,8 +873,9 @@ document.querySelectorAll('.mchip').forEach(m=>{
     appMode=m.dataset.m;
     document.querySelectorAll('.mchip').forEach(x=>x.classList.remove('on'));
     m.classList.add('on');
-    $('m-a-l').textContent = appMode==='cars'?'Coverage':'ROM 本節';
-    $('m-b-l').textContent = appMode==='cars'?'代償區段':'最大角度';
+    if(appMode==='sym'){ $('m-a-l').textContent='右 ROM'; $('m-b-l').textContent='左 ROM'; }
+    else if(appMode==='cars'){ $('m-a-l').textContent='Coverage'; $('m-b-l').textContent='代償區段'; }
+    else { $('m-a-l').textContent='ROM 本節'; $('m-b-l').textContent='最大角度'; }
     setPoseState(poseLocked?18:0, poseLocked);
   };
 });
@@ -768,15 +911,19 @@ function renderProgress(){
       <div class="trend">${bars}</div>`;
   }
   const rows=[...all].reverse().slice(0,15).map((s,idx)=>{
-    const J=JOINTS[s.joint];
     const dt=new Date(s.date);
     let main, sub, dHtml;
     if(s.type==='cars'){
-      main=`${J.label} CARs · ${s.coverage}%`;
+      main=`${JOINTS[s.joint].label} CARs · ${s.coverage}%`;
       sub=`代償區段 ×${s.compSegs} · smooth ${s.smooth}%`;
       dHtml=`<div class="delta" style="color:${s.compSegs?'var(--deficit)':'var(--good)'}">${s.compSegs?'⚠'+s.compSegs:'✓'}</div>`;
+    }else if(s.type==='sym'){
+      main=`${pairLabel(s.pair)} 雙側 · ASYM ${s.asym===null?'--':s.asym+'%'}`;
+      sub=`R ${s.romR}° / L ${s.romL}° · 代償×${s.comps}`;
+      const col = s.asym===null?'var(--muted)':s.asym>15?'var(--deficit)':s.asym>8?'var(--warn)':'var(--good)';
+      dHtml=`<div class="delta" style="color:${col}">${s.asym===null?'--':s.asym+'%'}</div>`;
     }else{
-      main=`${J.label} ROM ${s.rom}°`;
+      main=`${JOINTS[s.joint].label} ROM ${s.rom}°`;
       sub=`smoothness ${s.smooth}% · 代償 ×${s.comps}`;
       const hist=all.slice(0, all.length-1-idx);
       const prev=[...hist].reverse().find(p=>p.type==='rom'&&p.joint===s.joint&&p.client===s.client);
@@ -794,10 +941,9 @@ function renderProgress(){
   if(cb) cb.onclick=()=>{ if(confirm('確定清除全部記錄？')){ localStorage.removeItem(STORE_KEY); renderFilterStrip(); renderProgress(); } };
   document.querySelectorAll('.log-row').forEach(row=>{
     row.onclick=()=>{
-      const allRaw=loadSessions();
-      let filtered=allRaw; if(pgFilter!=='all') filtered=allRaw.filter(s=>s.client===pgFilter);
+      let filtered=loadSessions(); if(pgFilter!=='all') filtered=filtered.filter(s=>s.client===pgFilter);
       const rec=filtered[+row.dataset.i];
-      if(rec) showResult(rec, null);
+      if(rec){ $('savevid').style.display='none'; showResult(rec, null); }
     };
   });
 }
