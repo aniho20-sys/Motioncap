@@ -122,6 +122,10 @@ video{position:absolute;visibility:hidden;width:2px;height:2px}
 .sheet .close{margin-top:12px;width:100%;border:none;border-radius:13px;padding:15px;font-size:14px;font-weight:700;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
 .sheet .secondary{background:var(--surface2);color:var(--text);border:1px solid var(--line)}
 .clock-map{display:flex;justify-content:center;margin:16px 0 4px}
+.interpret{margin-top:16px;padding:14px 16px;border-radius:14px;border-left:3px solid var(--orange);background:var(--surface2);font-size:13.5px;line-height:1.6;color:#CFC9C2;display:none}
+.interpret.show{display:block}
+.interpret b{color:var(--text);font-weight:600}
+.interpret .tone{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;display:block;margin-bottom:6px}
 .client-row{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer}
 .client-row .av{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:600;font-size:13px;color:var(--orange)}
 .client-row .nm{font-size:14px;font-weight:600}
@@ -223,6 +227,7 @@ video{position:absolute;visibility:hidden;width:2px;height:2px}
       <div class="rg"><div class="v" id="r-4">--</div><div class="l" id="r-4l">代償</div></div>
     </div>
     <div class="clock-map" id="clockmap"></div>
+    <div id="interpret" class="interpret"></div>
     <button class="close secondary" id="savevid" style="display:none">⬇ 儲存影片（連骨架）</button>
     <button class="close" id="r-close">完成</button>
   </div>
@@ -776,9 +781,49 @@ function showResult(rec, prev){
     }else{ $('r-2').textContent='首次'; $('r-2').style.color='var(--muted)'; }
     $('r-2l').textContent='對上次';
   }
+  $('interpret').innerHTML = buildInterpretation(rec, prev);
+  $('interpret').classList.toggle('show', !!$('interpret').innerHTML);
   $('resultmodal').classList.add('show');
 }
 $('r-close').onclick = ()=> $('resultmodal').classList.remove('show');
+
+/* ===== auto interpretation (rule-based, 3-tier, non-medical) ===== */
+function buildInterpretation(rec, prev){
+  if(rec.type==='sym'){
+    const pj = pairLabel(rec.pair);
+    if(rec.asym===null)
+      return `<span class="tone">解讀</span>呢次只有一邊入鏡，<b>資料不足</b>，做唔到左右對比。下次兩邊都要影到先計到不對稱。`;
+    if(rec.asym<=8)
+      return `<span class="tone" style="color:var(--good)">解讀 · 對稱良好</span>${pj}關節左右差 <b>${rec.asym}%</b>，屬對稱範圍。呢個pattern健康，繼續保持。`;
+    if(rec.asym<=15){
+      const strong = rec.romR>=rec.romL?'右':'左', weak = rec.romR>=rec.romL?'左':'右';
+      return `<span class="tone" style="color:var(--warn)">解讀 · 值得注意</span>${pj}關節左右差 <b>${rec.asym}%</b>，${weak}邊活動範圍細過${strong}邊。呢個唔對稱值得留意，可以喺訓練上補返弱邊。`;
+    }
+    const strong = rec.romR>=rec.romL?'右':'左', weak = rec.romR>=rec.romL?'左':'右';
+    return `<span class="tone" style="color:var(--deficit)">解讀 · 明顯不對稱</span>${pj}關節左右差達 <b>${rec.asym}%</b>，${weak}邊明顯緊過${strong}邊。建議跟進，呢個pattern可能影響動作模式，例如深蹲或單腳發力會偏一邊。`;
+  }
+  if(rec.type==='rom'){
+    const J=JOINTS[rec.joint];
+    let s = `<span class="tone">解讀</span>${J.label} 主動活動範圍 <b>${rec.rom}°</b>。`;
+    if(prev && prev.rom!==undefined){
+      const d=rec.rom-prev.rom;
+      if(d>=3) s+=` 對比上次進步咗 <b>+${d}°</b>，訓練見效，方向啱。`;
+      else if(d<=-3) s+=` 對比上次跌咗 ${d}°，可能當日狀態、熱身唔夠或者測量角度有出入，下次留意。`;
+      else s+=` 同上次相若，維持緊。`;
+    }
+    if(rec.comps>0) s+=` 過程中偵測到 <b>${rec.comps}次</b>骨盆代償——範圍可以細啲、控制行先。`;
+    return s;
+  }
+  if(rec.type==='cars'){
+    const J=JOINTS[rec.joint];
+    let s=`<span class="tone">解讀</span>${J.label} CARs 完成度 <b>${rec.coverage}%</b>。`;
+    if(rec.coverage<60) s+=` 圈未行完整，可能關節主動控制到呢個位就到頂——呢個正正係要練嘅範圍。`;
+    if(rec.compSegs>0) s+=` 有 <b>${rec.compSegs}個</b>方位出現代償，睇返clock map嗰幾點鐘位，嗰度係控制最弱嘅角度。`;
+    else if(rec.coverage>=60) s+=` 全程冇代償，控制質素好。`;
+    return s;
+  }
+  return '';
+}
 
 function clockMapSvg(segs){
   let paths='';
