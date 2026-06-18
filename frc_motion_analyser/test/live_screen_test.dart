@@ -34,6 +34,12 @@ class _FakePoseSource implements PoseSource {
       const ColoredBox(color: Colors.black);
 
   @override
+  Future<void> startVideoRecording() async {}
+
+  @override
+  Future<String?> stopVideoRecording() async => null;
+
+  @override
   Future<void> dispose() async {
     await _controller.close();
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
 
 import '../cv/angle_calculator.dart';
+import '../cv/rep_tracker.dart';
+import 'capture_mode.dart';
 import 'compensation.dart';
 
 /// A timestamped snapshot of [PoseAngles] captured during a recording
@@ -45,15 +47,22 @@ class CompensationEvent {
 /// plus the resulting AROM. Saved locally pending Firestore sync (CLAUDE.md
 /// "之後": Firebase project建立).
 class SessionRecording {
-  SessionRecording({required this.startedAt});
+  SessionRecording({required this.startedAt, required this.mode});
 
   final DateTime startedAt;
+  final CaptureMode mode;
   final List<SessionFrame> frames = [];
   final List<CompensationEvent> compensationEvents = [];
+  final List<SquatRep> squatReps = [];
+  final List<DeadliftRep> deadliftReps = [];
 
   /// 髖屈曲 AROM reached during the session, in degrees — set when the
   /// session ends.
   double hipFlexionAromDeg = 0;
+
+  /// Path to the recorded video file, or `null` if video recording wasn't
+  /// active/supported for this session.
+  String? videoPath;
 
   void addFrame(Duration elapsed, PoseAngles angles) {
     frames.add(SessionFrame(elapsed: elapsed, angles: angles));
@@ -65,10 +74,14 @@ class SessionRecording {
 
   Map<String, dynamic> toJson() => {
         'startedAt': startedAt.toIso8601String(),
+        'mode': mode.name,
         'durationMs': frames.isEmpty ? 0 : frames.last.elapsed.inMilliseconds,
         'hipFlexionAromDeg': hipFlexionAromDeg,
+        'videoPath': videoPath,
         'frames': frames.map((f) => f.toJson()).toList(),
         'compensationEvents':
             compensationEvents.map((e) => e.toJson()).toList(),
+        'squatReps': squatReps.map((r) => r.toJson()).toList(),
+        'deadliftReps': deadliftReps.map((r) => r.toJson()).toList(),
       };
 }

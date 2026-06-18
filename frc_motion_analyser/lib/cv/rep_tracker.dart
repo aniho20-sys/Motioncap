@@ -79,6 +79,13 @@ class SquatRep {
   /// `true` when the rep didn't reach parallel — motion-capture-v2.html
   /// flags `淺 Shallow` reps in the rep log.
   bool get isWarn => depth == SquatDepth.shallow;
+
+  Map<String, dynamic> toJson() => {
+        'n': n,
+        'depth': depth.name,
+        'kneeMin': kneeMin,
+        'backAngle': backAngle,
+      };
 }
 
 enum _SquatState { standing, descending, bottom, ascending }
@@ -192,6 +199,13 @@ class DeadliftRep {
       kneeTravel != null && kneeTravel! > CompensationThresholds.kneeTravel;
 
   bool get isWarn => isBackRoundingWarn || isKneeTravelWarn;
+
+  Map<String, dynamic> toJson() => {
+        'n': n,
+        'hipMin': hipMin,
+        'backDelta': backDelta,
+        'kneeTravel': kneeTravel,
+      };
 }
 
 enum _DeadliftState { standing, lowering, bottom, lifting }

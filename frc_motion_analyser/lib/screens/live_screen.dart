@@ -203,7 +203,7 @@ class _LiveScreenState extends State<LiveScreen> {
     setState(() => _squatView = view);
   }
 
-  void _startRecording() {
+  Future<void> _startRecording() async {
     _hipFlexionTracker.reset();
     switch (_mode) {
       case CaptureMode.squat:
@@ -220,11 +220,20 @@ class _LiveScreenState extends State<LiveScreen> {
     _stopwatch
       ..reset()
       ..start();
-    _session = SessionRecording(startedAt: DateTime.now());
+    _session = SessionRecording(startedAt: DateTime.now(), mode: _mode);
     _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
       if (mounted) setState(() {});
     });
     setState(() => _recording = true);
+
+    // Video recording is best-effort: if the pose source can't support it
+    // (e.g. the camera doesn't allow recording alongside the live image
+    // stream), the JSON session below still saves without a video.
+    try {
+      await widget.poseSource.startVideoRecording();
+    } catch (_) {
+      // Ignored — see comment above.
+    }
   }
 
   Future<void> _stopRecording() async {
@@ -238,7 +247,14 @@ class _LiveScreenState extends State<LiveScreen> {
     });
     if (session == null) return;
 
+    try {
+      session.videoPath = await widget.poseSource.stopVideoRecording();
+    } catch (_) {
+      // Recording wasn't active/supported — JSON session still saves.
+    }
     session.hipFlexionAromDeg = _hipFlexionTracker.arom;
+    session.squatReps.addAll(_squatTracker.reps);
+    session.deadliftReps.addAll(_deadliftTracker.reps);
     final path = await widget.sessionStorage.save(session);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(

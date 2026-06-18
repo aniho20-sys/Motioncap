@@ -20,5 +20,13 @@ abstract class PoseSource {
   /// [initialize] completes, or permission denied).
   Widget? buildPreview(BuildContext context);
 
+  /// Starts saving the camera feed to a video file alongside live pose
+  /// detection. Sources that can't record video should no-op.
+  Future<void> startVideoRecording();
+
+  /// Stops recording and returns the saved video file's path, or `null` if
+  /// recording wasn't active or isn't supported by this source.
+  Future<String?> stopVideoRecording();
+
   Future<void> dispose();
 }

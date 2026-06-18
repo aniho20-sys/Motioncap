@@ -3,7 +3,8 @@ import 'dart:io';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/widgets.dart';
-import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart';
+import 'package:google_mlkit_pose_detection/google_mlkit_pose_detection.dart'
+    hide PoseLandmark;
 
 import '../models/pose_landmark.dart';
 import 'pose_source.dart';
@@ -65,6 +66,7 @@ class CameraPoseSource implements PoseSource {
   PoseDetector? _detector;
   final _frameController = StreamController<PoseFrame>.broadcast();
   bool _isDetecting = false;
+  bool _isRecordingVideo = false;
 
   @override
   Stream<PoseFrame> get frames => _frameController.stream;
@@ -117,6 +119,29 @@ class CameraPoseSource implements PoseSource {
     final controller = _controller;
     if (controller == null || !controller.value.isInitialized) return null;
     return CameraPreview(controller);
+  }
+
+  // `startImageStream` (live pose detection, above) and `startVideoRecording`
+  // both reconfigure the camera's capture session. Running them concurrently
+  // is the standard pattern with CameraX on modern Android and AVFoundation
+  // on iOS, but it hasn't been exercised on real hardware in this sandbox —
+  // if recording silently fails or pose detection drops out while recording,
+  // check here first.
+  @override
+  Future<void> startVideoRecording() async {
+    final controller = _controller;
+    if (controller == null || _isRecordingVideo) return;
+    await controller.startVideoRecording();
+    _isRecordingVideo = true;
+  }
+
+  @override
+  Future<String?> stopVideoRecording() async {
+    final controller = _controller;
+    if (controller == null || !_isRecordingVideo) return null;
+    _isRecordingVideo = false;
+    final file = await controller.stopVideoRecording();
+    return file.path;
   }
 
   @override
