@@ -19,25 +19,25 @@
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{height:100%;overscroll-behavior:none}
 body{background:var(--ink);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
-.mono{font-family:var(--mono)}
 
 #app{height:100dvh;display:flex;flex-direction:column}
 .view{flex:1;overflow-y:auto;display:none;padding-bottom:90px}
 .view.on{display:block}
 
-/* ===== tab bar ===== */
 .tabbar{position:fixed;bottom:0;left:0;right:0;height:calc(64px + env(safe-area-inset-bottom));background:rgba(10,10,10,.94);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom);z-index:50}
 .tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:10px;color:var(--muted);cursor:pointer}
 .tab.active{color:var(--orange)}
 .tab svg{width:22px;height:22px}
 
-/* ===== assess view ===== */
+/* ===== assess ===== */
 #assess{position:relative;padding:0;background:#000}
 .stage{position:absolute;inset:0;overflow:hidden}
-video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
-#overlay{position:absolute;inset:0;width:100%;height:100%;transform:scaleX(-1)}
-.hud-top{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5;pointer-events:none}
+video{position:absolute;visibility:hidden;width:2px;height:2px}
+#overlay{position:absolute;inset:0;width:100%;height:100%}
+.hud-top{position:absolute;top:calc(14px + env(safe-area-inset-top));left:14px;right:14px;display:flex;justify-content:space-between;align-items:flex-start;z-index:5}
+.hud-left{display:flex;gap:8px;flex-wrap:wrap}
 .chip{display:inline-flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;padding:6px 11px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.55);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px)}
+.chip.clickable{cursor:pointer}
 .dot{width:7px;height:7px;border-radius:50%;flex:none}
 @keyframes blink{50%{opacity:.25}}
 .blink{animation:blink 1.2s infinite}
@@ -47,9 +47,12 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 .jchip{flex:none;font-family:var(--mono);font-size:12px;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:rgba(0,0,0,.55);color:var(--muted);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);cursor:pointer}
 .jchip.on{background:var(--orange);color:#0A0A0A;border-color:var(--orange);font-weight:500}
 
-/* drawer */
 .drawer{position:absolute;left:0;right:0;bottom:64px;background:rgba(14,14,14,.94);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:10px 18px 16px;z-index:6}
-.grab{width:42px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto 12px}
+.grab{width:42px;height:4px;border-radius:2px;background:rgba(255,255,255,.2);margin:0 auto}
+#grabzone{padding:0 0 10px;cursor:pointer}
+.modechips{display:flex;gap:7px;margin-bottom:12px}
+.mchip{flex:1;text-align:center;font-family:var(--mono);font-size:11.5px;padding:9px 0;border-radius:11px;border:1px solid var(--line);color:var(--muted);cursor:pointer}
+.mchip.on{background:var(--orange-soft);border-color:var(--orange);color:var(--orange);font-weight:500}
 .drawer-row{display:flex;align-items:center;gap:14px}
 .metrics{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:8px 10px}
 .metric .v{font-family:var(--mono);font-size:19px;font-weight:500}
@@ -58,6 +61,14 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 .session-btn{margin-top:12px;width:100%;border:none;border-radius:13px;padding:14px;font-family:'Inter';font-size:15px;font-weight:700;background:var(--orange);color:#0A0A0A;cursor:pointer}
 .session-btn.stop{background:var(--deficit);color:#fff}
 .session-btn:disabled{background:var(--surface2);color:var(--muted)}
+.drawer.min .modechips,.drawer.min .drawer-row,.drawer.min .session-btn{display:none}
+.minirow{display:none;align-items:center;gap:16px;padding-bottom:4px}
+.drawer.min .minirow{display:flex}
+.minirow .mv{font-family:var(--mono);font-size:17px}
+.minirow .ml{font-family:var(--mono);font-size:8.5px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-top:1px}
+.minirow button{margin-left:auto;border:none;border-radius:10px;padding:10px 18px;font-weight:700;font-size:13px;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
+.minirow button.stop{background:var(--deficit);color:#fff}
+.minirow button:disabled{background:var(--surface2);color:var(--muted)}
 
 #startgate{position:absolute;inset:0;z-index:10;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
 #startgate .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--orange);text-transform:uppercase}
@@ -66,15 +77,19 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 #startgate button{margin-top:26px;border:none;border-radius:14px;padding:16px 38px;font-size:15px;font-weight:700;background:var(--orange);color:#0A0A0A;cursor:pointer;font-family:'Inter'}
 #gatestatus{margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted);min-height:16px}
 
-/* ===== toast ===== */
 #toast{position:fixed;top:calc(110px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-8px);background:rgba(255,59,92,.15);border:1px solid rgba(255,59,92,.5);color:#FF8CA0;font-size:12.5px;padding:10px 16px;border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:.25s;z-index:60;pointer-events:none;max-width:85%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+#toast.info{background:rgba(255,92,0,.14);border-color:rgba(255,92,0,.5);color:#FFB37E}
 
-/* ===== progress view ===== */
+/* ===== progress ===== */
 #progress{padding:0 20px}
 .pg-head{padding-top:calc(18px + env(safe-area-inset-top))}
 .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.2em;color:var(--muted);text-transform:uppercase}
 .pg-head h1{font-family:var(--disp);font-size:23px;font-weight:600;margin-top:6px}
+.filter-strip{display:flex;gap:8px;overflow-x:auto;margin-top:14px;scrollbar-width:none;padding-bottom:2px}
+.filter-strip::-webkit-scrollbar{display:none}
+.fchip{flex:none;font-family:var(--mono);font-size:11.5px;padding:7px 13px;border-radius:999px;border:1px solid var(--line);color:var(--muted);cursor:pointer;background:var(--surface)}
+.fchip.on{background:var(--orange);color:#0A0A0A;border-color:var(--orange)}
 .big-delta{margin-top:18px}
 .big-delta .v{font-family:var(--mono);font-size:40px;font-weight:500;letter-spacing:-.02em}
 .big-delta .v em{font-style:normal;font-size:16px;vertical-align:16px;margin-left:6px}
@@ -86,7 +101,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 .sec-head{display:flex;justify-content:space-between;align-items:baseline;margin:26px 0 6px}
 .sec-head h3{font-family:var(--disp);font-size:15px;font-weight:600}
 .sec-head a{font-family:var(--mono);font-size:11px;color:var(--deficit);cursor:pointer}
-.log-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line)}
+.log-row{display:flex;align-items:center;gap:12px;padding:13px 0;border-bottom:1px solid var(--line);cursor:pointer}
 .log-row .d{font-family:var(--mono);font-size:11px;color:var(--muted);width:50px;flex:none}
 .log-row .what{font-size:13.5px;font-weight:600}
 .log-row .sub{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin-top:2px}
@@ -94,17 +109,31 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 .empty{margin-top:40px;text-align:center;color:var(--muted);font-size:13px;line-height:1.8}
 .empty .ic{font-size:30px;margin-bottom:10px}
 
-/* result modal */
-#resultmodal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-end}
-#resultmodal.show{display:flex}
-.result-card{width:100%;background:var(--surface);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:22px 22px calc(28px + env(safe-area-inset-bottom))}
-.result-card .eyebrow{color:var(--orange)}
-.result-card h2{font-family:var(--disp);font-size:21px;margin:8px 0 16px}
+/* ===== modals ===== */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:80;display:none;align-items:flex-end}
+.modal.show{display:flex}
+.sheet{width:100%;background:var(--surface);border-radius:24px 24px 0 0;border-top:1px solid var(--line);padding:22px 22px calc(28px + env(safe-area-inset-bottom));max-height:80dvh;overflow-y:auto}
+.sheet .eyebrow{color:var(--orange)}
+.sheet h2{font-family:var(--disp);font-size:21px;margin:8px 0 16px}
 .result-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .rg{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:13px}
 .rg .v{font-family:var(--mono);font-size:23px}
 .rg .l{font-family:var(--mono);font-size:9.5px;color:var(--muted);letter-spacing:.1em;margin-top:3px;text-transform:uppercase}
-.result-card .close{margin-top:18px;width:100%;border:none;border-radius:13px;padding:15px;font-size:14px;font-weight:700;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
+.sheet .close{margin-top:12px;width:100%;border:none;border-radius:13px;padding:15px;font-size:14px;font-weight:700;background:var(--orange);color:#0A0A0A;font-family:'Inter';cursor:pointer}
+.sheet .secondary{background:var(--surface2);color:var(--text);border:1px solid var(--line)}
+.clock-map{display:flex;justify-content:center;margin:16px 0 4px}
+.interpret{margin-top:16px;padding:14px 16px;border-radius:14px;border-left:3px solid var(--orange);background:var(--surface2);font-size:13.5px;line-height:1.6;color:#CFC9C2;display:none}
+.interpret.show{display:block}
+.interpret b{color:var(--text);font-weight:600}
+.interpret .tone{font-family:var(--mono);font-size:10px;letter-spacing:.15em;text-transform:uppercase;display:block;margin-bottom:6px}
+.client-row{display:flex;align-items:center;gap:12px;padding:13px 4px;border-bottom:1px solid var(--line);cursor:pointer}
+.client-row .av{width:38px;height:38px;border-radius:50%;background:var(--surface2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;font-family:var(--disp);font-weight:600;font-size:13px;color:var(--orange)}
+.client-row .nm{font-size:14px;font-weight:600}
+.client-row .tick{margin-left:auto;color:var(--orange);font-size:15px}
+.add-row{display:flex;gap:8px;margin-top:14px}
+.add-row input{flex:1;background:var(--surface2);border:1px solid var(--line);border-radius:11px;padding:12px 14px;color:var(--text);font-size:14px;font-family:'Inter';outline:none}
+.add-row input:focus{border-color:var(--orange)}
+.add-row button{border:none;border-radius:11px;padding:0 18px;background:var(--orange);color:#0A0A0A;font-weight:700;font-size:13px;cursor:pointer;font-family:'Inter'}
 </style>
 </head>
 <body>
@@ -118,14 +147,29 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
     </div>
 
     <div class="hud-top">
-      <span class="chip" id="recchip" style="display:none"><span class="dot blink" style="background:var(--deficit)"></span><span id="rectime">00:00</span></span>
+      <div class="hud-left">
+        <span class="chip clickable" id="clientchip">👤 <span id="clientname">未指定客戶</span> ▾</span>
+        <span class="chip clickable" id="flipchip">↺ 鏡頭</span>
+        <span class="chip" id="recchip" style="display:none"><span class="dot blink" style="background:var(--deficit)"></span><span id="rectime">00:00</span></span>
+      </div>
       <span class="chip" id="posechip"><span class="dot" id="posedot" style="background:var(--muted)"></span><span id="posetext">INITIALISING</span></span>
     </div>
 
     <div class="joint-strip" id="jointstrip"></div>
 
-    <div class="drawer">
-      <div class="grab"></div>
+    <div class="drawer" id="drawer">
+      <div id="grabzone"><div class="grab"></div></div>
+      <div class="minirow">
+        <div><div class="mv" id="mini-val">--</div><div class="ml" id="mini-lab">VALUE</div></div>
+        <div><div class="mv" id="mini-smooth">--%</div><div class="ml">Smooth</div></div>
+        <div><div class="mv" id="mini-comp" style="color:var(--warn)">0</div><div class="ml">代償</div></div>
+        <button id="minibtn" disabled>開始</button>
+      </div>
+      <div class="modechips">
+        <div class="mchip on" data-m="rom">ROM 評估</div>
+        <div class="mchip" data-m="sym">雙側對比</div>
+        <div class="mchip" data-m="cars">CARs 引導</div>
+      </div>
       <div class="drawer-row">
         <svg width="96" height="96" viewBox="0 0 104 104" id="arcsvg">
           <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
@@ -135,13 +179,13 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
           <text id="arc-lab" x="52" y="66" text-anchor="middle" fill="#8A8580" font-family="DM Mono" font-size="8" letter-spacing="1.5">ANGLE</text>
         </svg>
         <div class="metrics">
-          <div class="metric"><div class="v" id="m-rom">--<small>°</small></div><div class="l">ROM 本節</div></div>
-          <div class="metric"><div class="v" id="m-max">--<small>°</small></div><div class="l">最大角度</div></div>
+          <div class="metric"><div class="v" id="m-a">--<small>°</small></div><div class="l" id="m-a-l">ROM 本節</div></div>
+          <div class="metric"><div class="v" id="m-b">--<small>°</small></div><div class="l" id="m-b-l">最大角度</div></div>
           <div class="metric"><div class="v" id="m-smooth" style="color:var(--good)">--<small>%</small></div><div class="l">Smoothness</div></div>
           <div class="metric"><div class="v" id="m-comp" style="color:var(--warn)">0</div><div class="l">代償偵測</div></div>
         </div>
       </div>
-      <button class="session-btn" id="sessionbtn" disabled>開始評估</button>
+      <button class="session-btn" id="sessionbtn" disabled>等待偵測 · 目標關節要入鏡</button>
     </div>
 
     <div id="startgate">
@@ -159,6 +203,7 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
       <div class="eyebrow">Progress</div>
       <h1>進度追蹤</h1>
     </div>
+    <div class="filter-strip" id="filterstrip"></div>
     <div id="pgcontent"></div>
   </div>
 
@@ -170,17 +215,35 @@ video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;transfor
 
 <div id="toast"></div>
 
-<div id="resultmodal">
-  <div class="result-card">
-    <div class="eyebrow">Session Complete</div>
+<!-- result / detail modal -->
+<div class="modal" id="resultmodal">
+  <div class="sheet">
+    <div class="eyebrow" id="r-eyebrow">Session Complete</div>
     <h2 id="r-title">評估結果</h2>
     <div class="result-grid">
-      <div class="rg"><div class="v" id="r-rom">--°</div><div class="l">ROM</div></div>
-      <div class="rg"><div class="v" id="r-delta">--</div><div class="l">對上次</div></div>
-      <div class="rg"><div class="v" id="r-smooth">--%</div><div class="l">Smoothness</div></div>
-      <div class="rg"><div class="v" id="r-comp">0</div><div class="l">代償</div></div>
+      <div class="rg"><div class="v" id="r-1">--</div><div class="l" id="r-1l">ROM</div></div>
+      <div class="rg"><div class="v" id="r-2">--</div><div class="l" id="r-2l">對上次</div></div>
+      <div class="rg"><div class="v" id="r-3">--</div><div class="l" id="r-3l">Smoothness</div></div>
+      <div class="rg"><div class="v" id="r-4">--</div><div class="l" id="r-4l">代償</div></div>
     </div>
+    <div class="clock-map" id="clockmap"></div>
+    <div id="interpret" class="interpret"></div>
+    <button class="close secondary" id="savevid" style="display:none">⬇ 儲存影片（連骨架）</button>
     <button class="close" id="r-close">完成</button>
+  </div>
+</div>
+
+<!-- client modal -->
+<div class="modal" id="clientmodal">
+  <div class="sheet">
+    <div class="eyebrow">Clients</div>
+    <h2>揀客戶</h2>
+    <div id="clientlist"></div>
+    <div class="add-row">
+      <input id="newclient" placeholder="新客戶名…" maxlength="24">
+      <button id="addclient">加入</button>
+    </div>
+    <button class="close secondary" id="c-close">關閉</button>
   </div>
 </div>
 
@@ -189,31 +252,40 @@ import { PoseLandmarker, FilesetResolver } from "https://cdn.jsdelivr.net/npm/@m
 
 /* ================= config ================= */
 const JOINTS = {
-  hip_r:      { label:'右髖屈', pts:[12,24,26], norm:130, mode:'flex' },
-  hip_l:      { label:'左髖屈', pts:[11,23,25], norm:130, mode:'flex' },
-  knee_r:     { label:'右膝',   pts:[24,26,28], norm:145, mode:'flex' },
-  knee_l:     { label:'左膝',   pts:[23,25,27], norm:145, mode:'flex' },
-  shoulder_r: { label:'右肩',   pts:[24,12,14], norm:180, mode:'raw'  },
-  shoulder_l: { label:'左肩',   pts:[23,11,13], norm:180, mode:'raw'  },
-  elbow_r:    { label:'右肘',   pts:[12,14,16], norm:150, mode:'flex' },
-  elbow_l:    { label:'左肘',   pts:[11,13,15], norm:150, mode:'flex' },
+  hip_r:      { label:'右髖', pts:[12,24,26], norm:130, mode:'flex' },
+  hip_l:      { label:'左髖', pts:[11,23,25], norm:130, mode:'flex' },
+  knee_r:     { label:'右膝', pts:[24,26,28], norm:145, mode:'flex' },
+  knee_l:     { label:'左膝', pts:[23,25,27], norm:145, mode:'flex' },
+  shoulder_r: { label:'右肩', pts:[24,12,14], norm:180, mode:'raw'  },
+  shoulder_l: { label:'左肩', pts:[23,11,13], norm:180, mode:'raw'  },
+  elbow_r:    { label:'右肘', pts:[12,14,16], norm:150, mode:'flex' },
+  elbow_l:    { label:'左肘', pts:[11,13,15], norm:150, mode:'flex' },
 };
 const CONNECTIONS = [[11,12],[11,13],[13,15],[12,14],[14,16],[11,23],[12,24],[23,24],[23,25],[25,27],[24,26],[26,28],[27,31],[28,32]];
-const PELVIS_TILT_LIMIT = 5; // degrees
-const STORE_KEY = 'md_sessions_v1';
+const PELVIS_TILT_LIMIT = 5;
+const SEGS = 24;
+const STORE_KEY='md_sessions_v1', CLIENT_KEY='md_clients_v1', CUR_CLIENT_KEY='md_client_current';
 
 /* ================= state ================= */
-let landmarker = null, video, canvas, ctx;
-let running = false, lastTs = -1;
-let currentJoint = 'hip_r';
-let session = null; // {start, joint, min, max, velBuf, comps, lastCompAt}
-let lastAngles = [], lastAngleTs = 0;
-let poseLocked = false;
+let landmarker=null, video, canvas, ctx;
+let running=false, lastTs=-1;
+let facing='user', mirrored=true;
+let currentJoint='hip_r';
+let appMode='rom';                 // 'rom' | 'sym' | 'cars'
+let session=null;
+let lastAngles=[], lastAngleTs=0, lastTheta=null;
+let poseLocked=false;
+let pgFilter='all';
+let recorder=null, recChunks=[], recBlob=null, recMime='';
 
 const $ = id => document.getElementById(id);
+const baseOf = k => k.replace(/_(r|l)$/,'');
+const pairLabel = b => JOINTS[b+'_r'].label.slice(1);
 
 /* ================= boot ================= */
 buildJointStrip();
+renderClientChip();
+renderFilterStrip();
 renderProgress();
 
 $('launchbtn').onclick = async () => {
@@ -227,33 +299,47 @@ $('launchbtn').onclick = async () => {
         delegate: "GPU"
       },
       runningMode: "VIDEO", numPoses: 1,
-      minPoseDetectionConfidence: .5, minPosePresenceConfidence: .5, minTrackingConfidence: .5
+      minPoseDetectionConfidence:.5, minPosePresenceConfidence:.5, minTrackingConfidence:.5
     });
     st.textContent = '開啟鏡頭中…';
     video = $('video');
-    const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:'user', width:{ideal:1280}, height:{ideal:720} }, audio:false });
-    video.srcObject = stream;
-    await new Promise(r => video.onloadedmetadata = r);
-    video.play();
     canvas = $('overlay'); ctx = canvas.getContext('2d');
+    await startStream(facing);
     resize(); window.addEventListener('resize', resize);
-    $('startgate').style.display = 'none';
+    $('startgate').style.display='none';
     running = true;
     requestAnimationFrame(loop);
   }catch(e){
-    st.textContent = e.name === 'NotAllowedError'
+    st.textContent = e.name==='NotAllowedError'
       ? '鏡頭權限被拒絕——請喺browser設定開返再reload'
-      : '初始化失敗：' + (e.message||e);
+      : '初始化失敗：'+(e.message||e);
   }
+};
+
+async function startStream(f){
+  if(video.srcObject) video.srcObject.getTracks().forEach(t=>t.stop());
+  const stream = await navigator.mediaDevices.getUserMedia({ video:{ facingMode:f, width:{ideal:1280}, height:{ideal:720} }, audio:false });
+  video.srcObject = stream;
+  await new Promise(r => video.onloadedmetadata = r);
+  video.play();
+  mirrored = (f==='user');
+}
+
+$('flipchip').onclick = async ()=>{
+  if(!running) return;
+  if(session){ toast('進行中，結束後先轉鏡頭'); return; }
+  const next = facing==='user' ? 'environment' : 'user';
+  try{ await startStream(next); facing = next; }
+  catch(e){ toast('轉唔到鏡頭——呢部機可能冇後置可用'); await startStream(facing); }
 };
 
 function resize(){
   const r = $('assess').getBoundingClientRect();
-  canvas.width = r.width * devicePixelRatio;
-  canvas.height = r.height * devicePixelRatio;
+  canvas.width = r.width*devicePixelRatio;
+  canvas.height = r.height*devicePixelRatio;
 }
 
-/* ================= main loop ================= */
+/* ================= loop & render ================= */
 function loop(){
   if(!running) return;
   if(video.currentTime !== lastTs){
@@ -264,291 +350,665 @@ function loop(){
   requestAnimationFrame(loop);
 }
 
+function drawVideoFrame(){
+  const cw=canvas.width, ch=canvas.height, vw=video.videoWidth, vh=video.videoHeight;
+  if(!vw||!vh){ ctx.fillStyle='#000'; ctx.fillRect(0,0,cw,ch); return; }
+  const scale=Math.max(cw/vw, ch/vh);
+  const dw=vw*scale, dh=vh*scale, ox=(cw-dw)/2, oy=(ch-dh)/2;
+  ctx.save();
+  if(mirrored){ ctx.translate(cw,0); ctx.scale(-1,1); }
+  ctx.drawImage(video, ox, oy, dw, dh);
+  ctx.restore();
+}
+
 function vidToCanvas(lm){
-  // object-fit: cover mapping
-  const cw = canvas.width, ch = canvas.height;
-  const vw = video.videoWidth, vh = video.videoHeight;
-  const scale = Math.max(cw/vw, ch/vh);
-  const ox = (cw - vw*scale)/2, oy = (ch - vh*scale)/2;
-  return { x: lm.x*vw*scale + ox, y: lm.y*vh*scale + oy };
+  const cw=canvas.width, ch=canvas.height, vw=video.videoWidth, vh=video.videoHeight;
+  const scale=Math.max(cw/vw, ch/vh);
+  const ox=(cw-vw*scale)/2, oy=(ch-vh*scale)/2;
+  let x = lm.x*vw*scale+ox;
+  if(mirrored) x = cw - x;
+  return { x, y: lm.y*vh*scale+oy };
 }
 
 function draw(res){
-  ctx.clearRect(0,0,canvas.width,canvas.height);
+  drawVideoFrame();
   const lms = res.landmarks && res.landmarks[0];
   const visCount = lms ? lms.filter(l=>(l.visibility??1)>.5).length : 0;
-  setPoseState(visCount);
-  if(!lms){ return; }
+  const J = JOINTS[currentJoint];
+  let jointVisible = false;
+  if(lms){
+    if(appMode==='sym'){
+      const b=baseOf(currentJoint);
+      jointVisible = JOINTS[b+'_r'].pts.every(i=>(lms[i].visibility??1)>.5)
+                  || JOINTS[b+'_l'].pts.every(i=>(lms[i].visibility??1)>.5);
+    }else{
+      jointVisible = J.pts.every(i=>(lms[i].visibility??1)>.5);
+    }
+  }
+  setPoseState(visCount, jointVisible);
+  if(!lms) return;
 
   const P = lms.map(vidToCanvas);
   const dpr = devicePixelRatio;
-
-  // pelvis tilt check
   const tilt = pelvisTilt(lms);
-  const pelvisBad = tilt !== null && tilt > PELVIS_TILT_LIMIT;
+  const pelvisBad = tilt!==null && tilt>PELVIS_TILT_LIMIT;
+
+  // active joint dots
+  const activeMids = new Set();
+  if(appMode==='sym'){
+    const b=baseOf(currentJoint);
+    activeMids.add(JOINTS[b+'_r'].pts[1]); activeMids.add(JOINTS[b+'_l'].pts[1]);
+  }else activeMids.add(J.pts[1]);
 
   // skeleton
-  ctx.lineWidth = 2.5*dpr; ctx.lineCap = 'round';
+  ctx.lineWidth=2.5*dpr; ctx.lineCap='round';
   for(const [a,b] of CONNECTIONS){
     if((lms[a].visibility??1)<.4||(lms[b].visibility??1)<.4) continue;
-    const hipLine = (a===23&&b===24);
-    ctx.strokeStyle = hipLine && pelvisBad ? '#FF3B5C' : '#FF5C00';
+    ctx.strokeStyle = (a===23&&b===24&&pelvisBad) ? '#FF3B5C' : '#FF5C00';
     ctx.beginPath(); ctx.moveTo(P[a].x,P[a].y); ctx.lineTo(P[b].x,P[b].y); ctx.stroke();
   }
-  const J = JOINTS[currentJoint];
   for(const i of new Set(CONNECTIONS.flat())){
     if((lms[i].visibility??1)<.4) continue;
-    const isActive = i === J.pts[1];
+    const isActive = activeMids.has(i);
     ctx.beginPath(); ctx.arc(P[i].x,P[i].y,(isActive?6:4.5)*dpr,0,Math.PI*2);
-    ctx.fillStyle = isActive ? '#FF5C00' : '#0A0A0A';
-    ctx.fill(); ctx.lineWidth = 2.5*dpr; ctx.strokeStyle='#FF5C00'; ctx.stroke();
+    ctx.fillStyle = isActive?'#FF5C00':'#0A0A0A';
+    ctx.fill(); ctx.lineWidth=2.5*dpr; ctx.strokeStyle='#FF5C00'; ctx.stroke();
   }
 
-  // current joint angle
-  const ang = jointAngle(lms, J);
-  if(ang !== null){
-    drawTag(P[J.pts[1]], `${J.label} ${Math.round(ang)}°`, '#FF5C00');
-    updateLive(ang);
+  if(appMode==='cars'){
+    drawCars(lms, P, J, pelvisBad, dpr);
+  }else if(appMode==='sym'){
+    const b=baseOf(currentJoint);
+    const JR=JOINTS[b+'_r'], JL=JOINTS[b+'_l'];
+    const aR=jointAngle(lms,JR), aL=jointAngle(lms,JL);
+    if(aR!==null) drawTag(P[JR.pts[1]], 'R '+Math.round(aR)+'°', '#FF5C00');
+    if(aL!==null) drawTag(P[JL.pts[1]], 'L '+Math.round(aL)+'°', '#FF5C00');
+    if(session && session.type==='sym') updateSymLive(aR, aL);
+    else if(aR!==null||aL!==null){
+      $('arc-val').textContent = Math.round(aR??aL)+'°';
+      $('arc-lab').textContent = pairLabel(b)+' 雙側';
+    }
+  }else{
+    const ang = jointAngle(lms, J);
+    if(ang!==null){
+      drawTag(P[J.pts[1]], `${J.label} ${Math.round(ang)}°`, '#FF5C00');
+      updateRomLive(ang, J);
+    }
   }
+
   if(pelvisBad){
     const mid = { x:(P[23].x+P[24].x)/2, y:(P[23].y+P[24].y)/2 - 28*dpr };
     drawTag(mid, `骨盆側傾 ${tilt.toFixed(1)}°`, '#FF3B5C');
     registerCompensation();
   }
+  if(session) $('rectime').textContent = fmtTime((Date.now()-session.start)/1000);
 }
 
-function drawTag(pos, text, color){
-  const dpr = devicePixelRatio;
-  ctx.save();
-  ctx.translate(pos.x, pos.y);
-  ctx.scale(-1,1); // un-mirror text
-  ctx.font = `${11*dpr}px 'DM Mono', monospace`;
-  const w = ctx.measureText(text).width + 16*dpr, h = 22*dpr;
-  ctx.fillStyle = 'rgba(10,10,10,.72)';
-  ctx.strokeStyle = color; ctx.lineWidth = 1*dpr;
-  roundRect(-w/2, -h-10*dpr, w, h, 7*dpr); ctx.fill(); ctx.stroke();
-  ctx.fillStyle = color === '#FF3B5C' ? '#FF8CA0' : '#fff';
-  ctx.textAlign='center'; ctx.textBaseline='middle';
-  ctx.fillText(text, 0, -h/2-10*dpr);
-  ctx.restore();
-}
-function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+/* ================= CARs ================= */
+function drawCars(lms, P, J, pelvisBad, dpr){
+  if(!J.pts.every(i=>(lms[i].visibility??1)>.5)) return;
+  const c = P[J.pts[1]], d = P[J.pts[2]];
+  const r = Math.hypot(d.x-c.x, d.y-c.y);
+  if(r < 20*dpr) return;
+  const theta = (Math.atan2(d.y-c.y, d.x-c.x)*180/Math.PI + 360) % 360;
+  const seg = Math.floor(theta/(360/SEGS));
 
-/* ================= math ================= */
-function jointAngle(lms, J){
-  const [a,b,c] = J.pts;
-  if((lms[a].visibility??1)<.5||(lms[b].visibility??1)<.5||(lms[c].visibility??1)<.5) return null;
-  const v1={x:lms[a].x-lms[b].x,y:lms[a].y-lms[b].y}, v2={x:lms[c].x-lms[b].x,y:lms[c].y-lms[b].y};
-  const dot=v1.x*v2.x+v1.y*v2.y, m=Math.hypot(v1.x,v1.y)*Math.hypot(v2.x,v2.y);
-  if(m===0) return null;
-  let deg = Math.acos(Math.min(1,Math.max(-1,dot/m)))*180/Math.PI;
-  if(J.mode==='flex') deg = 180 - deg; // flexion: 0 = straight
-  return deg;
-}
-function pelvisTilt(lms){
-  if((lms[23].visibility??1)<.5||(lms[24].visibility??1)<.5) return null;
-  const dy = lms[23].y-lms[24].y, dx = lms[23].x-lms[24].x;
-  return Math.abs(Math.atan2(dy,dx)*180/Math.PI);
+  if(session && session.type==='cars'){
+    session.segs[seg] = pelvisBad ? 2 : Math.max(session.segs[seg], 1);
+    const now = performance.now();
+    if(lastTheta!==null && lastAngleTs){
+      let dT = theta-lastTheta;
+      if(dT>180)dT-=360; if(dT<-180)dT+=360;
+      const vel = Math.abs(dT)/((now-lastAngleTs)/1000);
+      session.velBuf.push(vel);
+      if(session.velBuf.length>300) session.velBuf.shift();
+      if(vel>140) toast('減慢——CARs要慢、要控制', true);
+    }
+    lastTheta = theta; lastAngleTs = now;
+    updateCarsLive(J);
+  }
+
+  const segArc = Math.PI*2/SEGS;
+  for(let i=0;i<SEGS;i++){
+    const st = session?.segs?.[i] ?? 0;
+    ctx.beginPath();
+    ctx.arc(c.x, c.y, r, i*segArc+0.02, (i+1)*segArc-0.02);
+    ctx.lineWidth = (st? 5:2.5)*dpr;
+    ctx.strokeStyle = st===2 ? '#FF3B5C' : st===1 ? '#FF5C00' : 'rgba(255,255,255,.18)';
+    ctx.stroke();
+  }
+  const dot = { x:c.x+Math.cos(theta*Math.PI/180)*r, y:c.y+Math.sin(theta*Math.PI/180)*r };
+  ctx.beginPath(); ctx.arc(dot.x, dot.y, 8*dpr, 0, Math.PI*2);
+  ctx.fillStyle='#FF5C00'; ctx.fill();
+  ctx.beginPath(); ctx.arc(dot.x, dot.y, 13*dpr, 0, Math.PI*2);
+  ctx.strokeStyle='rgba(255,92,0,.4)'; ctx.lineWidth=2*dpr; ctx.stroke();
 }
 
-/* ================= live metrics ================= */
-function updateLive(ang){
-  const J = JOINTS[currentJoint];
+function updateCarsLive(J){
+  const covered = session.segs.filter(s=>s>0).length;
+  const compSegs = session.segs.filter(s=>s===2).length;
+  const pct = Math.round(covered/SEGS*100);
+  $('arc-cur').setAttribute('stroke-dasharray', `${pct*0.75} ${100-pct*0.75}`);
+  $('arc-val').textContent = pct+'%';
+  $('arc-lab').textContent = J.label+' CARS';
+  $('mini-val').textContent = pct+'%';
+  $('mini-lab').textContent = J.label+' CARs';
+  $('m-a').innerHTML = pct+'<small>%</small>';
+  $('m-b').innerHTML = compSegs;
+  $('m-b').style.color = compSegs? 'var(--deficit)':'var(--good)';
+  setSmoothUI(smoothness(session.velBuf));
+}
+
+/* ================= ROM single ================= */
+function updateRomLive(ang, J){
   const pct = Math.min(100, ang/J.norm*100);
   $('arc-cur').setAttribute('stroke-dasharray', `${pct*0.75} ${100-pct*0.75}`);
   $('arc-val').textContent = Math.round(ang)+'°';
   $('arc-lab').textContent = J.label;
+  $('mini-val').textContent = Math.round(ang)+'°';
+  $('mini-lab').textContent = J.label;
 
-  // smoothness buffer
   const now = performance.now();
-  if(lastAngleTs){
-    const vel = Math.abs(ang - (lastAngles.at(-1)??ang)) / ((now-lastAngleTs)/1000);
-    lastAngles.push(ang);
-    if(lastAngles.length>60) lastAngles.shift();
-    if(session){
-      session.velBuf.push(vel);
-      if(session.velBuf.length>300) session.velBuf.shift();
-    }
+  if(lastAngleTs && session && session.type==='rom'){
+    const vel = Math.abs(ang-(lastAngles.at(-1)??ang))/((now-lastAngleTs)/1000);
+    session.velBuf.push(vel);
+    if(session.velBuf.length>300) session.velBuf.shift();
   }
+  lastAngles.push(ang); if(lastAngles.length>60) lastAngles.shift();
   lastAngleTs = now;
 
-  if(session){
-    session.min = Math.min(session.min, ang);
-    session.max = Math.max(session.max, ang);
-    const rom = session.max - session.min;
-    $('m-rom').innerHTML = Math.round(rom)+'<small>°</small>';
-    $('m-max').innerHTML = Math.round(session.max)+'<small>°</small>';
+  if(session && session.type==='rom'){
+    session.min=Math.min(session.min,ang);
+    session.max=Math.max(session.max,ang);
+    $('m-a').innerHTML = Math.round(session.max-session.min)+'<small>°</small>';
+    $('m-b').innerHTML = Math.round(session.max)+'<small>°</small>';
     const maxPct = Math.min(100, session.max/J.norm*100);
     $('arc-max').setAttribute('stroke-dasharray', `${maxPct*0.75} ${100-maxPct*0.75}`);
-    const s = smoothness(session.velBuf);
-    $('m-smooth').innerHTML = s+'<small>%</small>';
-    $('m-smooth').style.color = s>=85?'var(--good)':s>=70?'var(--warn)':'var(--deficit)';
-    $('rectime').textContent = fmtTime((Date.now()-session.start)/1000);
+    setSmoothUI(smoothness(session.velBuf));
   }
+}
+
+/* ================= SYM bilateral ================= */
+function updateSymLive(aR, aL){
+  const s = session;
+  const now = performance.now();
+  const ref = aR ?? aL;
+  if(ref!==null && lastAngleTs){
+    const vel = Math.abs(ref-(lastAngles.at(-1)??ref))/((now-lastAngleTs)/1000);
+    s.velBuf.push(vel); if(s.velBuf.length>300) s.velBuf.shift();
+  }
+  if(ref!==null){ lastAngles.push(ref); if(lastAngles.length>60) lastAngles.shift(); lastAngleTs=now; }
+  if(aR!==null){ s.minR=Math.min(s.minR,aR); s.maxR=Math.max(s.maxR,aR); }
+  if(aL!==null){ s.minL=Math.min(s.minL,aL); s.maxL=Math.max(s.maxL,aL); }
+  const romR = s.maxR>-Infinity ? Math.round(s.maxR-s.minR) : null;
+  const romL = s.maxL>-Infinity ? Math.round(s.maxL-s.minL) : null;
+  $('m-a').innerHTML = (romR??'--')+'<small>°</small>';
+  $('m-b').innerHTML = (romL??'--')+'<small>°</small>';
+  let asym = null;
+  if(romR>5 && romL>5) asym = Math.round(Math.abs(romR-romL)/Math.max(romR,romL)*100);
+  const av = asym===null ? '--' : asym+'%';
+  $('arc-val').textContent = av; $('arc-lab').textContent = 'ASYM';
+  $('mini-val').textContent = av; $('mini-lab').textContent = 'ASYM';
+  if(asym!==null){
+    const w = Math.min(asym,100)*0.75;
+    $('arc-cur').setAttribute('stroke-dasharray', `${w} ${100-w}`);
+    $('arc-cur').setAttribute('stroke', asym>15?'#FF3B5C':asym>8?'#FFB020':'#4ADE80');
+    $('mini-val').style.color = asym>15?'var(--deficit)':asym>8?'var(--warn)':'var(--good)';
+  }
+  setSmoothUI(smoothness(s.velBuf));
+}
+
+function setSmoothUI(s){
+  $('m-smooth').innerHTML = s+'<small>%</small>';
+  $('m-smooth').style.color = s>=85?'var(--good)':s>=70?'var(--warn)':'var(--deficit)';
+  $('mini-smooth').textContent = s+'%';
+}
+
+/* ================= math ================= */
+function jointAngle(lms, J){
+  const [a,b,c]=J.pts;
+  if((lms[a].visibility??1)<.5||(lms[b].visibility??1)<.5||(lms[c].visibility??1)<.5) return null;
+  const v1={x:lms[a].x-lms[b].x,y:lms[a].y-lms[b].y}, v2={x:lms[c].x-lms[b].x,y:lms[c].y-lms[b].y};
+  const dot=v1.x*v2.x+v1.y*v2.y, m=Math.hypot(v1.x,v1.y)*Math.hypot(v2.x,v2.y);
+  if(m===0) return null;
+  let deg=Math.acos(Math.min(1,Math.max(-1,dot/m)))*180/Math.PI;
+  if(J.mode==='flex') deg=180-deg;
+  return deg;
+}
+function pelvisTilt(lms){
+  if((lms[23].visibility??1)<.5||(lms[24].visibility??1)<.5) return null;
+  return Math.abs(Math.atan2(lms[23].y-lms[24].y, lms[23].x-lms[24].x)*180/Math.PI);
 }
 function smoothness(buf){
   if(buf.length<10) return 100;
-  const m = buf.reduce((a,b)=>a+b,0)/buf.length;
+  const m=buf.reduce((a,b)=>a+b,0)/buf.length;
   if(m===0) return 100;
-  const sd = Math.sqrt(buf.reduce((a,b)=>a+(b-m)**2,0)/buf.length);
-  return Math.max(0, Math.min(100, Math.round(100 - (sd/m)*38)));
+  const sd=Math.sqrt(buf.reduce((a,b)=>a+(b-m)**2,0)/buf.length);
+  return Math.max(0,Math.min(100,Math.round(100-(sd/m)*38)));
 }
+
+/* ================= drawing helpers ================= */
+function drawTag(pos,text,color){
+  const dpr=devicePixelRatio;
+  ctx.save(); ctx.translate(pos.x,pos.y);
+  ctx.font=`${11*dpr}px 'DM Mono', monospace`;
+  const w=ctx.measureText(text).width+16*dpr, h=22*dpr;
+  ctx.fillStyle='rgba(10,10,10,.72)'; ctx.strokeStyle=color; ctx.lineWidth=1*dpr;
+  roundRect(-w/2,-h-10*dpr,w,h,7*dpr); ctx.fill(); ctx.stroke();
+  ctx.fillStyle = color==='#FF3B5C' ? '#FF8CA0' : '#fff';
+  ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillText(text,0,-h/2-10*dpr);
+  ctx.restore();
+}
+function roundRect(x,y,w,h,r){ctx.beginPath();ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath()}
+
+/* ================= compensation ================= */
 function registerCompensation(){
   if(!session) return;
-  const now = Date.now();
-  if(now - session.lastCompAt < 1500) return;
-  session.lastCompAt = now;
-  session.comps++;
-  $('m-comp').textContent = session.comps;
+  const now=Date.now();
+  if(now-session.lastCompAt<1500) return;
+  session.lastCompAt=now; session.comps++;
+  $('m-comp').textContent=session.comps;
+  $('mini-comp').textContent=session.comps;
   if(navigator.vibrate) navigator.vibrate(80);
   toast('⚠ 偵測到骨盆代償——收緊核心，幅度可以細啲');
 }
 
-function setPoseState(n){
-  const locked = n >= 24;
-  if(locked !== poseLocked){
-    poseLocked = locked;
-    $('sessionbtn').disabled = !locked && !session;
+/* ================= pose state ================= */
+const MODE_NAME = { rom:'評估', sym:'雙側對比', cars:'CARs' };
+function setPoseState(n, jointVisible){
+  const locked = n>=18 || jointVisible;
+  poseLocked = locked;
+  $('posedot').style.background = locked?'var(--good)':'var(--warn)';
+  $('posetext').textContent = locked?`POSE LOCKED · ${n}/33`:(n>0?'RE-ACQUIRING':'NO POSE');
+  if(!session){
+    $('sessionbtn').disabled = !locked;
+    $('minibtn').disabled = !locked;
+    $('sessionbtn').textContent = locked ? '開始'+MODE_NAME[appMode] : '等待偵測 · 目標關節要入鏡';
+    $('minibtn').textContent = locked?'開始':'等偵測';
   }
-  $('posedot').style.background = locked ? 'var(--good)' : 'var(--warn)';
-  $('posetext').textContent = locked ? `POSE LOCKED · ${n}/33` : (n>0?'RE-ACQUIRING':'NO POSE');
 }
+$('grabzone').onclick = ()=> $('drawer').classList.toggle('min');
+
+/* ================= recording ================= */
+function startRecording(){
+  recBlob=null; recChunks=[];
+  if(typeof MediaRecorder==='undefined') return;
+  const mimes=['video/mp4','video/webm;codecs=vp9','video/webm'];
+  recMime = mimes.find(m=>{ try{return MediaRecorder.isTypeSupported(m)}catch{return false} }) || '';
+  if(!recMime) return;
+  try{
+    const stream = canvas.captureStream(30);
+    recorder = new MediaRecorder(stream, { mimeType:recMime, videoBitsPerSecond:4000000 });
+    recorder.ondataavailable = e=>{ if(e.data && e.data.size) recChunks.push(e.data) };
+    recorder.start(1000);
+  }catch(e){ recorder=null; }
+}
+function stopRecording(cb){
+  if(!recorder){ cb&&cb(); return; }
+  const r = recorder; recorder=null;
+  r.onstop = ()=>{ if(recChunks.length) recBlob = new Blob(recChunks,{type:recMime}); cb&&cb(); };
+  try{ r.stop(); }catch{ cb&&cb(); }
+}
+$('savevid').onclick = ()=>{
+  if(!recBlob) return;
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(recBlob);
+  a.download='motioncap-'+new Date().toISOString().slice(0,16).replace(/[:T]/g,'-')+(recMime.includes('mp4')?'.mp4':'.webm');
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 8000);
+  toast('影片已儲存', true);
+};
 
 /* ================= session ================= */
-$('sessionbtn').onclick = () => session ? endSession() : startSession();
+$('sessionbtn').onclick = ()=> session ? endSession() : startSession();
+$('minibtn').onclick = ()=> session ? endSession() : startSession();
 
 function startSession(){
-  session = { start:Date.now(), joint:currentJoint, min:Infinity, max:-Infinity, velBuf:[], comps:0, lastCompAt:0 };
-  $('sessionbtn').textContent = '結束評估';
-  $('sessionbtn').classList.add('stop');
-  $('recchip').style.display = 'inline-flex';
-  $('m-comp').textContent = '0';
-}
-function endSession(){
-  if(session.max === -Infinity){ session=null; resetSessionUI(); return; }
-  const rec = {
-    date: new Date().toISOString(),
-    joint: session.joint,
-    rom: Math.round(session.max - session.min),
-    max: Math.round(session.max),
-    smooth: smoothness(session.velBuf),
-    comps: session.comps,
-    dur: Math.round((Date.now()-session.start)/1000)
+  lastTheta=null;
+  session = {
+    start:Date.now(), joint:currentJoint, type:appMode,
+    min:Infinity, max:-Infinity,
+    minR:Infinity, maxR:-Infinity, minL:Infinity, maxL:-Infinity,
+    segs:new Array(SEGS).fill(0),
+    velBuf:[], comps:0, lastCompAt:0,
+    client: curClient()?.name || null
   };
-  const all = loadSessions(); 
-  const prev = [...all].reverse().find(s=>s.joint===rec.joint);
-  all.push(rec); saveSessions(all);
-  showResult(rec, prev);
-  session = null; resetSessionUI(); renderProgress();
+  $('sessionbtn').textContent='結束'+MODE_NAME[appMode];
+  $('sessionbtn').classList.add('stop');
+  $('minibtn').textContent='結束'; $('minibtn').classList.add('stop');
+  $('recchip').style.display='inline-flex';
+  $('m-comp').textContent='0'; $('mini-comp').textContent='0';
+  $('drawer').classList.add('min');
+  startRecording();
 }
-function resetSessionUI(){
-  $('sessionbtn').textContent = '開始評估';
-  $('sessionbtn').classList.remove('stop');
-  $('recchip').style.display = 'none';
-  $('m-rom').innerHTML = '--<small>°</small>';
-  $('m-max').innerHTML = '--<small>°</small>';
-  $('m-smooth').innerHTML = '--<small>%</small>';
-  $('arc-max').setAttribute('stroke-dasharray','0 100');
-}
-function showResult(rec, prev){
-  $('r-title').textContent = JOINTS[rec.joint].label + ' 評估結果';
-  $('r-rom').textContent = rec.rom+'°';
-  $('r-smooth').textContent = rec.smooth+'%';
-  $('r-comp').textContent = rec.comps;
-  $('r-comp').style.color = rec.comps===0?'var(--good)':'var(--warn)';
-  if(prev){
-    const d = rec.rom - prev.rom;
-    $('r-delta').textContent = (d>=0?'+':'')+d+'°';
-    $('r-delta').style.color = d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)';
-  }else{
-    $('r-delta').textContent = '首次'; $('r-delta').style.color='var(--muted)';
+
+function endSession(){
+  const t = session.type;
+  let nothing=false, rec=null;
+  if(t==='cars') nothing = session.segs.every(s=>s===0);
+  else if(t==='sym') nothing = session.maxR===-Infinity && session.maxL===-Infinity;
+  else nothing = session.max===-Infinity;
+
+  if(t==='sym' && !nothing && (session.maxR===-Infinity || session.maxL===-Infinity)){
+    toast('兩邊關節都要入鏡先做到對比——再嚟一次');
+    nothing=true;
   }
+  if(nothing){
+    stopRecording();
+    session=null; resetSessionUI(); return;
+  }
+
+  rec = {
+    date:new Date().toISOString(),
+    joint:session.joint, type:t, client:session.client,
+    smooth:smoothness(session.velBuf), comps:session.comps,
+    dur:Math.round((Date.now()-session.start)/1000)
+  };
+  if(t==='cars'){
+    rec.coverage = Math.round(session.segs.filter(s=>s>0).length/SEGS*100);
+    rec.compSegs = session.segs.filter(s=>s===2).length;
+    rec.segs = session.segs;
+  }else if(t==='sym'){
+    rec.pair = baseOf(session.joint);
+    rec.romR = Math.round(session.maxR-session.minR);
+    rec.romL = Math.round(session.maxL-session.minL);
+    rec.asym = (rec.romR>5&&rec.romL>5)
+      ? Math.round(Math.abs(rec.romR-rec.romL)/Math.max(rec.romR,rec.romL)*100) : null;
+  }else{
+    rec.rom = Math.round(session.max-session.min);
+    rec.max = Math.round(session.max);
+  }
+  const all = loadSessions();
+  let prev=null;
+  if(t==='sym') prev=[...all].reverse().find(s=>s.type==='sym'&&s.pair===rec.pair&&s.client===rec.client);
+  else prev=[...all].reverse().find(s=>s.type===t&&s.joint===rec.joint&&s.client===rec.client);
+  all.push(rec); saveSessions(all);
+
+  $('savevid').style.display='none';
+  stopRecording(()=>{ if(recBlob) $('savevid').style.display='block'; });
+  showResult(rec, prev);
+  session=null; resetSessionUI(); renderFilterStrip(); renderProgress();
+}
+
+function resetSessionUI(){
+  $('sessionbtn').classList.remove('stop');
+  $('minibtn').classList.remove('stop');
+  $('recchip').style.display='none';
+  $('m-a').innerHTML='--<small>°</small>'; $('m-b').innerHTML='--<small>°</small>';
+  $('m-smooth').innerHTML='--<small>%</small>';
+  $('mini-val').textContent='--'; $('mini-smooth').textContent='--%';
+  $('mini-val').style.color='';
+  $('arc-max').setAttribute('stroke-dasharray','0 100');
+  $('arc-cur').setAttribute('stroke-dasharray','0 100');
+  $('arc-cur').setAttribute('stroke','#FF5C00');
+  $('drawer').classList.remove('min');
+  setPoseState(poseLocked?18:0, poseLocked);
+}
+
+/* ================= result / detail ================= */
+function showResult(rec, prev){
+  $('r-eyebrow').textContent = (rec.client||'未指定客戶')+' · '+new Date(rec.date).toLocaleDateString('zh-HK');
+  $('clockmap').innerHTML='';
+  $('r-3l').textContent='Smoothness'; $('r-4l').textContent='代償';
+  $('r-3').textContent = rec.smooth+'%'; $('r-3').style.color='';
+  $('r-4').textContent = rec.comps;
+  $('r-4').style.color = rec.comps===0?'var(--good)':'var(--warn)';
+
+  if(rec.type==='cars'){
+    $('r-title').textContent = JOINTS[rec.joint].label+' CARs結果';
+    $('r-1').textContent = rec.coverage+'%'; $('r-1l').textContent='COVERAGE'; $('r-1').style.color='';
+    $('r-2').textContent = rec.compSegs; $('r-2l').textContent='代償區段';
+    $('r-2').style.color = rec.compSegs? 'var(--deficit)':'var(--good)';
+    if(rec.segs) $('clockmap').innerHTML = clockMapSvg(rec.segs);
+  }else if(rec.type==='sym'){
+    $('r-title').textContent = pairLabel(rec.pair)+'關節 雙側對比';
+    $('r-1').textContent = rec.romR+'°'; $('r-1l').textContent='右 ROM'; $('r-1').style.color='';
+    $('r-2').textContent = rec.romL+'°'; $('r-2l').textContent='左 ROM'; $('r-2').style.color='';
+    $('r-3l').textContent='不對稱';
+    if(rec.asym!==null){
+      $('r-3').textContent = rec.asym+'%';
+      $('r-3').style.color = rec.asym>15?'var(--deficit)':rec.asym>8?'var(--warn)':'var(--good)';
+    }else $('r-3').textContent='--';
+    $('clockmap').innerHTML = symBarsSvg(rec.romR, rec.romL);
+  }else{
+    $('r-title').textContent = JOINTS[rec.joint].label+' 評估結果';
+    $('r-1').textContent = rec.rom+'°'; $('r-1l').textContent='ROM'; $('r-1').style.color='';
+    if(prev && prev.rom!==undefined){
+      const d = rec.rom-prev.rom;
+      $('r-2').textContent=(d>=0?'+':'')+d+'°';
+      $('r-2').style.color = d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)';
+    }else{ $('r-2').textContent='首次'; $('r-2').style.color='var(--muted)'; }
+    $('r-2l').textContent='對上次';
+  }
+  $('interpret').innerHTML = buildInterpretation(rec, prev);
+  $('interpret').classList.toggle('show', !!$('interpret').innerHTML);
   $('resultmodal').classList.add('show');
 }
 $('r-close').onclick = ()=> $('resultmodal').classList.remove('show');
+
+/* ===== auto interpretation (rule-based, 3-tier, non-medical) ===== */
+function buildInterpretation(rec, prev){
+  if(rec.type==='sym'){
+    const pj = pairLabel(rec.pair);
+    if(rec.asym===null)
+      return `<span class="tone">解讀</span>呢次只有一邊入鏡，<b>資料不足</b>，做唔到左右對比。下次兩邊都要影到先計到不對稱。`;
+    if(rec.asym<=8)
+      return `<span class="tone" style="color:var(--good)">解讀 · 對稱良好</span>${pj}關節左右差 <b>${rec.asym}%</b>，屬對稱範圍。呢個pattern健康，繼續保持。`;
+    if(rec.asym<=15){
+      const strong = rec.romR>=rec.romL?'右':'左', weak = rec.romR>=rec.romL?'左':'右';
+      return `<span class="tone" style="color:var(--warn)">解讀 · 值得注意</span>${pj}關節左右差 <b>${rec.asym}%</b>，${weak}邊活動範圍細過${strong}邊。呢個唔對稱值得留意，可以喺訓練上補返弱邊。`;
+    }
+    const strong = rec.romR>=rec.romL?'右':'左', weak = rec.romR>=rec.romL?'左':'右';
+    return `<span class="tone" style="color:var(--deficit)">解讀 · 明顯不對稱</span>${pj}關節左右差達 <b>${rec.asym}%</b>，${weak}邊明顯緊過${strong}邊。建議跟進，呢個pattern可能影響動作模式，例如深蹲或單腳發力會偏一邊。`;
+  }
+  if(rec.type==='rom'){
+    const J=JOINTS[rec.joint];
+    let s = `<span class="tone">解讀</span>${J.label} 主動活動範圍 <b>${rec.rom}°</b>。`;
+    if(prev && prev.rom!==undefined){
+      const d=rec.rom-prev.rom;
+      if(d>=3) s+=` 對比上次進步咗 <b>+${d}°</b>，訓練見效，方向啱。`;
+      else if(d<=-3) s+=` 對比上次跌咗 ${d}°，可能當日狀態、熱身唔夠或者測量角度有出入，下次留意。`;
+      else s+=` 同上次相若，維持緊。`;
+    }
+    if(rec.comps>0) s+=` 過程中偵測到 <b>${rec.comps}次</b>骨盆代償——範圍可以細啲、控制行先。`;
+    return s;
+  }
+  if(rec.type==='cars'){
+    const J=JOINTS[rec.joint];
+    let s=`<span class="tone">解讀</span>${J.label} CARs 完成度 <b>${rec.coverage}%</b>。`;
+    if(rec.coverage<60) s+=` 圈未行完整，可能關節主動控制到呢個位就到頂——呢個正正係要練嘅範圍。`;
+    if(rec.compSegs>0) s+=` 有 <b>${rec.compSegs}個</b>方位出現代償，睇返clock map嗰幾點鐘位，嗰度係控制最弱嘅角度。`;
+    else if(rec.coverage>=60) s+=` 全程冇代償，控制質素好。`;
+    return s;
+  }
+  return '';
+}
+
+function clockMapSvg(segs){
+  let paths='';
+  const segArc=360/SEGS;
+  for(let i=0;i<SEGS;i++){
+    const a0=(i*segArc-90)*Math.PI/180, a1=((i+1)*segArc-90)*Math.PI/180;
+    const r=52, cx=60, cy=60;
+    const color = segs[i]===2?'#FF3B5C':segs[i]===1?'#FF5C00':'rgba(255,255,255,.12)';
+    paths+=`<path d="M ${cx+Math.cos(a0)*r} ${cy+Math.sin(a0)*r} A ${r} ${r} 0 0 1 ${cx+Math.cos(a1)*r} ${cy+Math.sin(a1)*r}" stroke="${color}" stroke-width="${segs[i]?7:3}" fill="none" stroke-linecap="round"/>`;
+  }
+  return `<svg width="120" height="120" viewBox="0 0 120 120">${paths}
+    <text x="60" y="57" text-anchor="middle" fill="#8A8580" font-family="DM Mono" font-size="8" letter-spacing="1">12點喺頂</text>
+    <text x="60" y="70" text-anchor="middle" fill="#8A8580" font-family="DM Mono" font-size="8">紅=代償方位</text></svg>`;
+}
+
+function symBarsSvg(romR, romL){
+  const mx=Math.max(romR,romL,1);
+  const wR=Math.max(6, romR/mx*170), wL=Math.max(6, romL/mx*170);
+  return `<svg width="240" height="66" viewBox="0 0 240 66">
+    <text x="0" y="15" fill="#8A8580" font-family="DM Mono" font-size="11">R</text>
+    <rect x="16" y="4" width="${wR}" height="15" rx="7.5" fill="#FF5C00"/>
+    <text x="${22+wR}" y="16" fill="#F5F2EE" font-family="DM Mono" font-size="11">${romR}°</text>
+    <text x="0" y="50" fill="#8A8580" font-family="DM Mono" font-size="11">L</text>
+    <rect x="16" y="39" width="${wL}" height="15" rx="7.5" fill="rgba(255,92,0,.45)"/>
+    <text x="${22+wL}" y="51" fill="#F5F2EE" font-family="DM Mono" font-size="11">${romL}°</text>
+  </svg>`;
+}
+
+/* ================= clients ================= */
+function loadClients(){ try{ return JSON.parse(localStorage.getItem(CLIENT_KEY))||[] }catch{ return [] } }
+function saveClients(c){ localStorage.setItem(CLIENT_KEY, JSON.stringify(c)) }
+function curClient(){
+  const id = localStorage.getItem(CUR_CLIENT_KEY);
+  return loadClients().find(c=>c.id===id) || null;
+}
+function renderClientChip(){ $('clientname').textContent = curClient()?.name || '未指定客戶'; }
+$('clientchip').onclick = ()=>{
+  if(session){ toast('評估進行中，結束後先轉客戶'); return; }
+  renderClientList(); $('clientmodal').classList.add('show');
+};
+$('c-close').onclick = ()=> $('clientmodal').classList.remove('show');
+$('addclient').onclick = ()=>{
+  const name = $('newclient').value.trim();
+  if(!name) return;
+  const all = loadClients();
+  const c = { id:'c'+Date.now(), name };
+  all.push(c); saveClients(all);
+  localStorage.setItem(CUR_CLIENT_KEY, c.id);
+  $('newclient').value='';
+  renderClientList(); renderClientChip(); renderFilterStrip();
+};
+function renderClientList(){
+  const cur = curClient();
+  let html = `<div class="client-row" data-id=""><div class="av">—</div><div class="nm">唔指定客戶</div>${!cur?'<div class="tick">✓</div>':''}</div>`;
+  for(const c of loadClients()){
+    html += `<div class="client-row" data-id="${c.id}"><div class="av">${c.name.slice(0,2)}</div><div class="nm">${c.name}</div>${cur?.id===c.id?'<div class="tick">✓</div>':''}</div>`;
+  }
+  $('clientlist').innerHTML = html;
+  document.querySelectorAll('#clientlist .client-row').forEach(el=>{
+    el.onclick = ()=>{
+      if(el.dataset.id) localStorage.setItem(CUR_CLIENT_KEY, el.dataset.id);
+      else localStorage.removeItem(CUR_CLIENT_KEY);
+      renderClientChip(); renderClientList();
+      $('clientmodal').classList.remove('show');
+    };
+  });
+}
 
 /* ================= storage ================= */
 function loadSessions(){ try{ return JSON.parse(localStorage.getItem(STORE_KEY))||[] }catch{ return [] } }
 function saveSessions(s){ localStorage.setItem(STORE_KEY, JSON.stringify(s)) }
 
-/* ================= joint strip ================= */
+/* ================= joint strip & mode ================= */
 function buildJointStrip(){
-  const strip = $('jointstrip');
+  const strip=$('jointstrip');
   for(const [k,j] of Object.entries(JOINTS)){
-    const el = document.createElement('div');
-    el.className = 'jchip'+(k===currentJoint?' on':'');
-    el.textContent = j.label;
-    el.onclick = ()=>{
-      if(session){ toast('評估進行中，結束後先可以轉關節'); return; }
-      currentJoint = k;
+    const el=document.createElement('div');
+    el.className='jchip'+(k===currentJoint?' on':'');
+    el.textContent=j.label;
+    el.onclick=()=>{
+      if(session){ toast('進行中，結束後先轉關節'); return; }
+      currentJoint=k;
       document.querySelectorAll('.jchip').forEach(c=>c.classList.remove('on'));
       el.classList.add('on');
     };
     strip.appendChild(el);
   }
 }
+document.querySelectorAll('.mchip').forEach(m=>{
+  m.onclick=()=>{
+    if(session){ toast('進行中，結束後先轉模式'); return; }
+    appMode=m.dataset.m;
+    document.querySelectorAll('.mchip').forEach(x=>x.classList.remove('on'));
+    m.classList.add('on');
+    if(appMode==='sym'){ $('m-a-l').textContent='右 ROM'; $('m-b-l').textContent='左 ROM'; }
+    else if(appMode==='cars'){ $('m-a-l').textContent='Coverage'; $('m-b-l').textContent='代償區段'; }
+    else { $('m-a-l').textContent='ROM 本節'; $('m-b-l').textContent='最大角度'; }
+    setPoseState(poseLocked?18:0, poseLocked);
+  };
+});
 
-/* ================= progress view ================= */
+/* ================= progress ================= */
+function renderFilterStrip(){
+  const clients=[...new Set(loadSessions().map(s=>s.client).filter(Boolean))];
+  let html=`<div class="fchip ${pgFilter==='all'?'on':''}" data-f="all">全部</div>`;
+  for(const c of clients) html+=`<div class="fchip ${pgFilter===c?'on':''}" data-f="${c}">${c}</div>`;
+  $('filterstrip').innerHTML=html;
+  document.querySelectorAll('.fchip').forEach(f=>{
+    f.onclick=()=>{ pgFilter=f.dataset.f; renderFilterStrip(); renderProgress(); };
+  });
+}
 function renderProgress(){
-  const all = loadSessions();
-  const box = $('pgcontent');
+  let all=loadSessions();
+  if(pgFilter!=='all') all=all.filter(s=>s.client===pgFilter);
+  const box=$('pgcontent');
   if(all.length===0){
-    box.innerHTML = `<div class="empty"><div class="ic">◎</div>未有評估記錄<br>去「評估」tab做第一次測量</div>`;
+    box.innerHTML=`<div class="empty"><div class="ic">◎</div>未有評估記錄<br>去「評估」tab做第一次測量</div>`;
     return;
   }
-  // group: latest joint trend
-  const latestJoint = all.at(-1).joint;
-  const series = all.filter(s=>s.joint===latestJoint).slice(-8);
-  const first = series[0], last = series.at(-1);
-  const delta = last.rom - first.rom;
-  const maxRom = Math.max(...series.map(s=>s.rom), 1);
-
-  let bars = series.map(s=>{
-    const h = Math.max(8, s.rom/maxRom*100);
-    return `<div class="bar" style="height:100%"><span>${s.rom}°</span><i style="height:${h}%"></i></div>`;
-  }).join('');
-
-  let rows = [...all].reverse().slice(0,12).map((s,i,arr)=>{
-    const prev = all.slice(0, all.length-1-i).reverse().find(p=>p.joint===s.joint);
-    const d = prev ? s.rom - prev.rom : null;
-    const dHtml = d===null ? `<div class="delta" style="color:var(--muted)">首次</div>`
-      : `<div class="delta" style="color:${d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)'}">${d>=0?'+':''}${d}°</div>`;
-    const dt = new Date(s.date);
-    return `<div class="log-row">
-      <div class="d">${dt.getDate()}/${dt.getMonth()+1}</div>
-      <div><div class="what">${JOINTS[s.joint].label} · ROM ${s.rom}°</div>
-      <div class="sub">smoothness ${s.smooth}% · 代償 ×${s.comps} · ${fmtTime(s.dur)}</div></div>
-      ${dHtml}</div>`;
-  }).join('');
-
-  box.innerHTML = `
-    <div class="big-delta">
+  const lastRom=[...all].reverse().find(s=>s.type==='rom');
+  let head='';
+  if(lastRom){
+    const series=all.filter(s=>s.type==='rom'&&s.joint===lastRom.joint).slice(-8);
+    const delta=series.at(-1).rom-series[0].rom;
+    const maxRom=Math.max(...series.map(s=>s.rom),1);
+    const bars=series.map(s=>`<div class="bar" style="height:100%"><span>${s.rom}°</span><i style="height:${Math.max(8,s.rom/maxRom*100)}%"></i></div>`).join('');
+    head=`<div class="big-delta">
       <div class="v">${delta>=0?'+':''}${delta}°<em style="color:${delta>0?'var(--good)':delta<0?'var(--deficit)':'var(--muted)'}">${delta>0?'▲':delta<0?'▼':'—'}</em></div>
-      <div class="l">${JOINTS[latestJoint].label} ROM 變化 · ${series.length} 次記錄</div>
-    </div>
-    <div class="trend">${bars}</div>
-    <div class="sec-head"><h3>評估記錄</h3><a id="clearbtn">清除全部</a></div>
-    ${rows}`;
-  const cb = $('clearbtn');
-  if(cb) cb.onclick = ()=>{ if(confirm('確定清除全部記錄？')){ localStorage.removeItem(STORE_KEY); renderProgress(); } };
+      <div class="l">${JOINTS[lastRom.joint].label} ROM 變化 · ${series.length} 次記錄</div></div>
+      <div class="trend">${bars}</div>`;
+  }
+  const rows=[...all].reverse().slice(0,15).map((s,idx)=>{
+    const dt=new Date(s.date);
+    let main, sub, dHtml;
+    if(s.type==='cars'){
+      main=`${JOINTS[s.joint].label} CARs · ${s.coverage}%`;
+      sub=`代償區段 ×${s.compSegs} · smooth ${s.smooth}%`;
+      dHtml=`<div class="delta" style="color:${s.compSegs?'var(--deficit)':'var(--good)'}">${s.compSegs?'⚠'+s.compSegs:'✓'}</div>`;
+    }else if(s.type==='sym'){
+      main=`${pairLabel(s.pair)} 雙側 · ASYM ${s.asym===null?'--':s.asym+'%'}`;
+      sub=`R ${s.romR}° / L ${s.romL}° · 代償×${s.comps}`;
+      const col = s.asym===null?'var(--muted)':s.asym>15?'var(--deficit)':s.asym>8?'var(--warn)':'var(--good)';
+      dHtml=`<div class="delta" style="color:${col}">${s.asym===null?'--':s.asym+'%'}</div>`;
+    }else{
+      main=`${JOINTS[s.joint].label} ROM ${s.rom}°`;
+      sub=`smoothness ${s.smooth}% · 代償 ×${s.comps}`;
+      const hist=all.slice(0, all.length-1-idx);
+      const prev=[...hist].reverse().find(p=>p.type==='rom'&&p.joint===s.joint&&p.client===s.client);
+      const d=prev? s.rom-prev.rom : null;
+      dHtml = d===null?`<div class="delta" style="color:var(--muted)">首次</div>`
+        :`<div class="delta" style="color:${d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)'}">${d>=0?'+':''}${d}°</div>`;
+    }
+    if(s.client) sub = s.client+' · '+sub;
+    return `<div class="log-row" data-i="${all.length-1-idx}">
+      <div class="d">${dt.getDate()}/${dt.getMonth()+1}</div>
+      <div><div class="what">${main}</div><div class="sub">${sub}</div></div>${dHtml}</div>`;
+  }).join('');
+  box.innerHTML = head+`<div class="sec-head"><h3>評估記錄</h3><a id="clearbtn">清除全部</a></div>`+rows;
+  const cb=$('clearbtn');
+  if(cb) cb.onclick=()=>{ if(confirm('確定清除全部記錄？')){ localStorage.removeItem(STORE_KEY); renderFilterStrip(); renderProgress(); } };
+  document.querySelectorAll('.log-row').forEach(row=>{
+    row.onclick=()=>{
+      let filtered=loadSessions(); if(pgFilter!=='all') filtered=filtered.filter(s=>s.client===pgFilter);
+      const rec=filtered[+row.dataset.i];
+      if(rec){ $('savevid').style.display='none'; showResult(rec, null); }
+    };
+  });
 }
 
 /* ================= misc ================= */
 let toastTimer;
-function toast(msg){
-  const t = $('toast'); t.textContent = msg; t.classList.add('show');
-  clearTimeout(toastTimer); toastTimer = setTimeout(()=>t.classList.remove('show'), 2600);
+function toast(msg, info){
+  const t=$('toast'); t.textContent=msg;
+  t.className = info?'show info':'show';
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className='',2600);
 }
 function fmtTime(s){ s=Math.floor(s); return String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0') }
 
-/* tabs */
 document.querySelectorAll('.tab').forEach(t=>{
-  t.onclick = ()=>{
+  t.onclick=()=>{
     document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
     document.querySelectorAll('.view').forEach(x=>x.classList.remove('on'));
     t.classList.add('active');
     $(t.dataset.v).classList.add('on');
-    if(t.dataset.v==='progress') renderProgress();
+    if(t.dataset.v==='progress'){ renderFilterStrip(); renderProgress(); }
   };
 });
 </script>
