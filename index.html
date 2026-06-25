@@ -17,6 +17,7 @@
   --mono:'DM Mono',monospace;--disp:'Space Grotesk',sans-serif;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+.hidden{display:none!important}
 html,body{height:100%;overscroll-behavior:none}
 body{background:var(--ink);color:var(--text);font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;overflow:hidden}
 
@@ -61,7 +62,18 @@ video{position:absolute;visibility:hidden;width:2px;height:2px}
 .session-btn{margin-top:12px;width:100%;border:none;border-radius:13px;padding:14px;font-family:'Inter';font-size:15px;font-weight:700;background:var(--orange);color:#0A0A0A;cursor:pointer}
 .session-btn.stop{background:var(--deficit);color:#fff}
 .session-btn:disabled{background:var(--surface2);color:var(--muted)}
-.drawer.min .modechips,.drawer.min .drawer-row,.drawer.min .session-btn{display:none}
+.drawer.min .drawer-expanded-only{display:none}
+.dlchips{display:flex;gap:7px;margin-bottom:12px}
+.cam-hint{font-family:var(--mono);font-size:10.5px;color:var(--muted);margin:-2px 0 10px;line-height:1.5}
+.replog-wrap{margin-top:14px}
+.replog-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.replog-head .lab{font-family:var(--mono);font-size:10px;color:var(--muted);letter-spacing:.12em;text-transform:uppercase}
+.replog-head .cnt{font-family:var(--mono);font-size:22px;color:var(--orange);font-weight:600}
+.rep-log{display:flex;flex-direction:column;gap:6px;max-height:110px;overflow-y:auto}
+.rep-log-item{display:flex;justify-content:space-between;gap:10px;font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface2);border-radius:8px;padding:7px 10px;border:1px solid var(--line)}
+.rep-log-item.warn{color:#FFB37E;border-color:var(--warn)}
+.calibrate-row{margin-top:10px;display:flex;justify-content:space-between;align-items:center}
+.calibrate-row button{border:none;border-radius:10px;padding:9px 14px;font-family:'Inter';font-size:12px;font-weight:700;background:var(--surface2);color:var(--text);border:1px solid var(--line);cursor:pointer}
 .minirow{display:none;align-items:center;gap:16px;padding-bottom:4px}
 .drawer.min .minirow{display:flex}
 .minirow .mv{font-family:var(--mono);font-size:17px}
@@ -70,12 +82,19 @@ video{position:absolute;visibility:hidden;width:2px;height:2px}
 .minirow button.stop{background:var(--deficit);color:#fff}
 .minirow button:disabled{background:var(--surface2);color:var(--muted)}
 
-#startgate{position:absolute;inset:0;z-index:10;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center}
+#startgate{position:absolute;inset:0;z-index:10;background:var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;text-align:center;overflow-y:auto}
 #startgate .eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.25em;color:var(--orange);text-transform:uppercase}
-#startgate h1{font-family:var(--disp);font-size:26px;margin:12px 0 10px}
-#startgate p{color:var(--muted);font-size:13.5px;line-height:1.7;max-width:300px}
-#startgate button{margin-top:26px;border:none;border-radius:14px;padding:16px 38px;font-size:15px;font-weight:700;background:var(--orange);color:#0A0A0A;cursor:pointer;font-family:'Inter'}
+#startgate h1{font-family:var(--disp);font-size:24px;margin:10px 0 8px}
+#startgate p{color:var(--muted);font-size:12.5px;line-height:1.6;max-width:300px;margin:0 auto}
+#startgate button{margin-top:24px;border:none;border-radius:14px;padding:16px 38px;font-size:15px;font-weight:700;background:var(--orange);color:#0A0A0A;cursor:pointer;font-family:'Inter'}
 #gatestatus{margin-top:16px;font-family:var(--mono);font-size:11px;color:var(--muted);min-height:16px}
+.cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:340px;margin-top:24px}
+.cat-card{background:var(--surface2);border:1.5px solid var(--line);border-radius:16px;padding:18px 10px;text-align:center;cursor:pointer}
+.cat-card.on{border-color:var(--orange);background:var(--orange-soft)}
+.cat-ic{font-size:26px;margin-bottom:8px}
+.cat-name{font-size:13px;font-weight:600}
+.cat-sub{font-family:var(--mono);font-size:9.5px;color:var(--muted);margin-top:2px;text-transform:uppercase;letter-spacing:.08em}
+.cat-card.on .cat-sub{color:var(--orange)}
 
 #toast{position:fixed;top:calc(110px + env(safe-area-inset-top));left:50%;transform:translateX(-50%) translateY(-8px);background:rgba(255,59,92,.15);border:1px solid rgba(255,59,92,.5);color:#FF8CA0;font-size:12.5px;padding:10px 16px;border-radius:12px;backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);opacity:0;transition:.25s;z-index:60;pointer-events:none;max-width:85%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -148,6 +167,7 @@ video{position:absolute;visibility:hidden;width:2px;height:2px}
 
     <div class="hud-top">
       <div class="hud-left">
+        <span class="chip clickable" id="homechip">← <span id="catname">身體排列分析</span></span>
         <span class="chip clickable" id="clientchip">👤 <span id="clientname">未指定客戶</span> ▾</span>
         <span class="chip clickable" id="flipchip">↺ 鏡頭</span>
         <span class="chip" id="recchip" style="display:none"><span class="dot blink" style="background:var(--deficit)"></span><span id="rectime">00:00</span></span>
@@ -165,12 +185,17 @@ video{position:absolute;visibility:hidden;width:2px;height:2px}
         <div><div class="mv" id="mini-comp" style="color:var(--warn)">0</div><div class="ml">代償</div></div>
         <button id="minibtn" disabled>開始</button>
       </div>
-      <div class="modechips">
+      <div class="cam-hint drawer-expanded-only" id="camhint"></div>
+      <div class="modechips drawer-expanded-only" id="modechips">
         <div class="mchip on" data-m="rom">ROM 評估</div>
         <div class="mchip" data-m="sym">雙側對比</div>
         <div class="mchip" data-m="cars">CARs 引導</div>
       </div>
-      <div class="drawer-row">
+      <div class="dlchips drawer-expanded-only hidden" id="dlchips">
+        <div class="mchip on" data-dl="squat">深蹲 Squat</div>
+        <div class="mchip" data-dl="deadlift">硬舉 Deadlift</div>
+      </div>
+      <div class="drawer-row drawer-expanded-only">
         <svg width="96" height="96" viewBox="0 0 104 104" id="arcsvg">
           <circle cx="52" cy="52" r="42" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="9"/>
           <circle id="arc-max" cx="52" cy="52" r="49" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="1.5" pathLength="100" stroke-dasharray="0 100" stroke-dashoffset="25"/>
@@ -185,14 +210,46 @@ video{position:absolute;visibility:hidden;width:2px;height:2px}
           <div class="metric"><div class="v" id="m-comp" style="color:var(--warn)">0</div><div class="l">代償偵測</div></div>
         </div>
       </div>
-      <button class="session-btn" id="sessionbtn" disabled>等待偵測 · 目標關節要入鏡</button>
+      <div class="replog-wrap drawer-expanded-only hidden" id="replogwrap">
+        <div class="replog-head"><span class="lab" id="replog-lab">次數 Reps</span><span class="cnt" id="repcount">0</span></div>
+        <div class="calibrate-row hidden" id="calibraterow">
+          <span style="font-family:var(--mono);font-size:11px;color:var(--muted)">校準中立背部角度</span>
+          <button id="calibratebtn">校準 Calibrate</button>
+        </div>
+        <div class="rep-log" id="replog"></div>
+      </div>
+      <button class="session-btn drawer-expanded-only" id="sessionbtn" disabled>等待偵測 · 目標關節要入鏡</button>
     </div>
 
     <div id="startgate">
-      <div class="eyebrow">Movement Decoded</div>
-      <h1>FRC Motion Analyser</h1>
-      <p>鏡頭只喺裝置本機運算，唔會上傳任何影像。企喺鏡頭前2–3米，全身入鏡效果最好。</p>
-      <button id="launchbtn">啟動鏡頭 →</button>
+      <div class="home-head">
+        <div class="eyebrow">Movement Decoded</div>
+        <h1>FRC Motion Analyser</h1>
+        <p>揀一個評估類別，撳「評估」開鏡頭。鏡頭只喺裝置本機運算，唔會上傳任何影像。</p>
+      </div>
+      <div class="cat-grid" id="catgrid">
+        <div class="cat-card on" data-cat="alignment">
+          <div class="cat-ic">⚖️</div>
+          <div class="cat-name">身體排列分析</div>
+          <div class="cat-sub">Body Alignment</div>
+        </div>
+        <div class="cat-card" data-cat="squatdl">
+          <div class="cat-ic">🏋️</div>
+          <div class="cat-name">深蹲同硬拉</div>
+          <div class="cat-sub">Squat &amp; Deadlift</div>
+        </div>
+        <div class="cat-card" data-cat="press">
+          <div class="cat-ic">💪</div>
+          <div class="cat-name">軍推動態分析</div>
+          <div class="cat-sub">Overhead Press</div>
+        </div>
+        <div class="cat-card" data-cat="general">
+          <div class="cat-ic">🏃</div>
+          <div class="cat-name">健身動作分析</div>
+          <div class="cat-sub">General Fitness</div>
+        </div>
+      </div>
+      <button id="launchbtn">評估 →</button>
       <div id="gatestatus"></div>
     </div>
   </div>
@@ -266,21 +323,88 @@ const PELVIS_TILT_LIMIT = 5;
 const SEGS = 24;
 const STORE_KEY='md_sessions_v1', CLIENT_KEY='md_clients_v1', CUR_CLIENT_KEY='md_client_current';
 
+/* ================= categories (home screen) ================= */
+const CATEGORIES = {
+  alignment: { label:'身體排列分析', hint:'' },
+  squatdl:   { label:'深蹲同硬拉',   hint:'建議側面拍攝以分析深度與背部角度 — Side view recommended' },
+  press:     { label:'軍推動態分析', hint:'建議正面或側面拍攝，全程見到手肘 — Keep both elbows in frame' },
+  general:   { label:'健身動作分析', hint:'揀返要追蹤嗰個關節，再做動作 — Pick the joint this movement drives' },
+};
+
+// Rep state-machine thresholds — PLACEHOLDER, Ani to validate against real footage.
+const REP_THRESH = {
+  squat:    { high:165, low:100, hys:8 },
+  deadlift: { high:165, low:110, hys:8 },
+  press:    { high:160, low:90,  hys:8 },
+};
+
 /* ================= state ================= */
 let landmarker=null, video, canvas, ctx;
 let running=false, lastTs=-1;
 let facing='user', mirrored=true;
 let currentJoint='hip_r';
 let appMode='rom';                 // 'rom' | 'sym' | 'cars'
+let category='alignment';          // 'alignment' | 'squatdl' | 'press' | 'general'
+let dlType='squat';                // 'squat' | 'deadlift', only used when category==='squatdl'
 let session=null;
 let lastAngles=[], lastAngleTs=0, lastTheta=null;
 let poseLocked=false;
 let pgFilter='all';
 let recorder=null, recChunks=[], recBlob=null, recMime='';
+let lastTrunkLean=null;            // updated every frame, used by the deadlift calibrate button
+let neutralBackAngle=null;
+let repCounter=null;               // active rep state machine for squatdl/press/general sessions
 
 const $ = id => document.getElementById(id);
 const baseOf = k => k.replace(/_(r|l)$/,'');
 const pairLabel = b => JOINTS[b+'_r'].label.slice(1);
+const avgOf = (a,b) => a===null ? b : b===null ? a : (a+b)/2;
+
+/* ================= generic rep counter (squat/deadlift/press/general) ================= */
+function makeRepCounter(){
+  return { state:'top', prev:null, minV:null, maxV:null, count:0, reps:[] };
+}
+function updateRep(rc, val, thresh, extra){
+  if(val==null) return null;
+  if(rc.minV===null||val<rc.minV) rc.minV=val;
+  if(rc.maxV===null||val>rc.maxV) rc.maxV=val;
+  let completed=null;
+  switch(rc.state){
+    case 'top':
+      if(val < thresh.high - thresh.hys) rc.state='descending';
+      break;
+    case 'descending':
+      if(val <= thresh.low) rc.state='bottom';
+      break;
+    case 'bottom':
+      if(rc.prev!==null && val>rc.prev+0.5) rc.state='ascending';
+      break;
+    case 'ascending':
+      if(val >= thresh.high){
+        rc.state='top'; rc.count++;
+        completed = { n:rc.count, min:Math.round(rc.minV), max:Math.round(rc.maxV), ...(extra?extra():{}) };
+        rc.reps.push(completed);
+        rc.minV=null; rc.maxV=null;
+      }else if(rc.prev!==null && val<rc.prev-0.5){
+        rc.state='bottom';
+      }
+      break;
+  }
+  rc.prev = val;
+  return completed;
+}
+function trunkLean(lms){
+  if((lms[11].visibility??1)<.5||(lms[12].visibility??1)<.5||(lms[23].visibility??1)<.5||(lms[24].visibility??1)<.5) return null;
+  const midSh={x:(lms[11].x+lms[12].x)/2,y:(lms[11].y+lms[12].y)/2}, midHip={x:(lms[23].x+lms[24].x)/2,y:(lms[23].y+lms[24].y)/2};
+  return Math.atan2(midHip.x-midSh.x, midHip.y-midSh.y)*180/Math.PI;
+}
+function squatDepthLabel(lms){
+  if((lms[23].visibility??1)<.5||(lms[24].visibility??1)<.5||(lms[25].visibility??1)<.5||(lms[26].visibility??1)<.5) return '--';
+  const delta = (lms[23].y+lms[24].y)/2 - (lms[25].y+lms[26].y)/2;
+  if(delta >= 0.04) return '淺 Shallow';
+  if(delta > -0.02) return '平行 Parallel';
+  return '低於平行 Below Parallel';
+}
 
 /* ================= boot ================= */
 buildJointStrip();
@@ -288,24 +412,55 @@ renderClientChip();
 renderFilterStrip();
 renderProgress();
 
+document.querySelectorAll('.cat-card').forEach(c=>{
+  c.onclick = ()=>{
+    document.querySelectorAll('.cat-card').forEach(x=>x.classList.remove('on'));
+    c.classList.add('on');
+    category = c.dataset.cat;
+  };
+});
+
+document.querySelectorAll('#dlchips .mchip').forEach(b=>{
+  b.onclick = ()=>{
+    if(session){ toast('進行中，結束後先轉模式'); return; }
+    dlType = b.dataset.dl;
+    document.querySelectorAll('#dlchips .mchip').forEach(x=>x.classList.remove('on'));
+    b.classList.add('on');
+    $('camhint').textContent = dlType==='squat' ? CATEGORIES.squatdl.hint : '建議側面拍攝以分析髖鉸鏈與背部角度 — Side view recommended';
+    $('calibraterow').classList.toggle('hidden', dlType!=='deadlift');
+    resetRepCounter();
+  };
+});
+
+$('homechip').onclick = ()=>{
+  if(session){ toast('評估進行中，結束後先返主頁'); return; }
+  running = false;
+  $('startgate').style.display='flex';
+};
+
+let resizeBound=false;
 $('launchbtn').onclick = async () => {
   const st = $('gatestatus');
   try{
-    st.textContent = '載入AI模型中…（首次約10秒）';
-    const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
-    landmarker = await PoseLandmarker.createFromOptions(vision, {
-      baseOptions: {
-        modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
-        delegate: "GPU"
-      },
-      runningMode: "VIDEO", numPoses: 1,
-      minPoseDetectionConfidence:.5, minPosePresenceConfidence:.5, minTrackingConfidence:.5
-    });
+    if(!landmarker){
+      st.textContent = '載入AI模型中…（首次約10秒）';
+      const vision = await FilesetResolver.forVisionTasks("https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm");
+      landmarker = await PoseLandmarker.createFromOptions(vision, {
+        baseOptions: {
+          modelAssetPath: "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/1/pose_landmarker_lite.task",
+          delegate: "GPU"
+        },
+        runningMode: "VIDEO", numPoses: 1,
+        minPoseDetectionConfidence:.5, minPosePresenceConfidence:.5, minTrackingConfidence:.5
+      });
+    }
     st.textContent = '開啟鏡頭中…';
     video = $('video');
     canvas = $('overlay'); ctx = canvas.getContext('2d');
     await startStream(facing);
-    resize(); window.addEventListener('resize', resize);
+    resize();
+    if(!resizeBound){ window.addEventListener('resize', resize); resizeBound=true; }
+    enterCategory(category);
     $('startgate').style.display='none';
     running = true;
     requestAnimationFrame(loop);
@@ -314,6 +469,38 @@ $('launchbtn').onclick = async () => {
       ? '鏡頭權限被拒絕——請喺browser設定開返再reload'
       : '初始化失敗：'+(e.message||e);
   }
+};
+
+function enterCategory(cat){
+  category = cat;
+  $('catname').textContent = CATEGORIES[cat].label;
+  $('jointstrip').classList.toggle('hidden', cat==='squatdl' || cat==='press');
+  $('modechips').classList.toggle('hidden', cat!=='alignment');
+  $('dlchips').classList.toggle('hidden', cat!=='squatdl');
+  $('replogwrap').classList.toggle('hidden', cat==='alignment');
+  $('calibraterow').classList.toggle('hidden', !(cat==='squatdl' && dlType==='deadlift'));
+  $('camhint').textContent = cat==='squatdl'
+    ? (dlType==='squat' ? CATEGORIES.squatdl.hint : '建議側面拍攝以分析髖鉸鏈與背部角度 — Side view recommended')
+    : CATEGORIES[cat].hint;
+  resetRepCounter();
+  setPoseState(poseLocked?18:0, poseLocked);
+}
+
+function resetRepCounter(){
+  repCounter = makeRepCounter();
+  $('repcount').textContent = '0';
+  $('replog').innerHTML = '';
+  $('replog-lab').textContent = category==='squatdl'
+    ? (dlType==='squat' ? '深蹲次數 Squat Reps' : '硬舉次數 Deadlift Reps')
+    : category==='press' ? '軍推次數 Press Reps' : '次數 Reps';
+}
+
+$('calibratebtn').onclick = ()=>{
+  if(lastTrunkLean===null) return;
+  neutralBackAngle = lastTrunkLean;
+  const btn = $('calibratebtn'), orig = btn.textContent;
+  btn.textContent = '已校準 ✓';
+  setTimeout(()=>{ btn.textContent = orig; }, 1000);
 };
 
 async function startStream(f){
@@ -377,10 +564,17 @@ function draw(res){
   const J = JOINTS[currentJoint];
   let jointVisible = false;
   if(lms){
-    if(appMode==='sym'){
+    if(category==='alignment' && appMode==='sym'){
       const b=baseOf(currentJoint);
       jointVisible = JOINTS[b+'_r'].pts.every(i=>(lms[i].visibility??1)>.5)
                   || JOINTS[b+'_l'].pts.every(i=>(lms[i].visibility??1)>.5);
+    }else if(category==='squatdl'){
+      const pair = dlType==='squat' ? ['knee_r','knee_l'] : ['hip_r','hip_l'];
+      jointVisible = JOINTS[pair[0]].pts.every(i=>(lms[i].visibility??1)>.5)
+                  || JOINTS[pair[1]].pts.every(i=>(lms[i].visibility??1)>.5);
+    }else if(category==='press'){
+      jointVisible = JOINTS.elbow_r.pts.every(i=>(lms[i].visibility??1)>.5)
+                  || JOINTS.elbow_l.pts.every(i=>(lms[i].visibility??1)>.5);
     }else{
       jointVisible = J.pts.every(i=>(lms[i].visibility??1)>.5);
     }
@@ -395,9 +589,14 @@ function draw(res){
 
   // active joint dots
   const activeMids = new Set();
-  if(appMode==='sym'){
+  if(category==='alignment' && appMode==='sym'){
     const b=baseOf(currentJoint);
     activeMids.add(JOINTS[b+'_r'].pts[1]); activeMids.add(JOINTS[b+'_l'].pts[1]);
+  }else if(category==='squatdl'){
+    const pair = dlType==='squat' ? ['knee_r','knee_l'] : ['hip_r','hip_l'];
+    activeMids.add(JOINTS[pair[0]].pts[1]); activeMids.add(JOINTS[pair[1]].pts[1]);
+  }else if(category==='press'){
+    activeMids.add(JOINTS.elbow_r.pts[1]); activeMids.add(JOINTS.elbow_l.pts[1]);
   }else activeMids.add(J.pts[1]);
 
   // skeleton
@@ -415,25 +614,43 @@ function draw(res){
     ctx.fill(); ctx.lineWidth=2.5*dpr; ctx.strokeStyle='#FF5C00'; ctx.stroke();
   }
 
-  if(appMode==='cars'){
-    drawCars(lms, P, J, pelvisBad, dpr);
-  }else if(appMode==='sym'){
-    const b=baseOf(currentJoint);
-    const JR=JOINTS[b+'_r'], JL=JOINTS[b+'_l'];
+  if(category==='alignment'){
+    if(appMode==='cars'){
+      drawCars(lms, P, J, pelvisBad, dpr);
+    }else if(appMode==='sym'){
+      const b=baseOf(currentJoint);
+      const JR=JOINTS[b+'_r'], JL=JOINTS[b+'_l'];
+      const aR=jointAngle(lms,JR), aL=jointAngle(lms,JL);
+      if(aR!==null) drawTag(P[JR.pts[1]], 'R '+Math.round(aR)+'°', '#FF5C00');
+      if(aL!==null) drawTag(P[JL.pts[1]], 'L '+Math.round(aL)+'°', '#FF5C00');
+      if(session && session.type==='sym') updateSymLive(aR, aL);
+      else if(aR!==null||aL!==null){
+        $('arc-val').textContent = Math.round(aR??aL)+'°';
+        $('arc-lab').textContent = pairLabel(b)+' 雙側';
+      }
+    }else{
+      const ang = jointAngle(lms, J);
+      if(ang!==null){
+        drawTag(P[J.pts[1]], `${J.label} ${Math.round(ang)}°`, '#FF5C00');
+        updateRomLive(ang, J);
+      }
+    }
+  }else if(category==='squatdl'){
+    const JR = dlType==='squat' ? JOINTS.knee_r : JOINTS.hip_r;
+    const JL = dlType==='squat' ? JOINTS.knee_l : JOINTS.hip_l;
     const aR=jointAngle(lms,JR), aL=jointAngle(lms,JL);
     if(aR!==null) drawTag(P[JR.pts[1]], 'R '+Math.round(aR)+'°', '#FF5C00');
     if(aL!==null) drawTag(P[JL.pts[1]], 'L '+Math.round(aL)+'°', '#FF5C00');
-    if(session && session.type==='sym') updateSymLive(aR, aL);
-    else if(aR!==null||aL!==null){
-      $('arc-val').textContent = Math.round(aR??aL)+'°';
-      $('arc-lab').textContent = pairLabel(b)+' 雙側';
-    }
+    updateSquatDlLive(avgOf(aR,aL), lms, trunkLean(lms));
+  }else if(category==='press'){
+    const aR=jointAngle(lms,JOINTS.elbow_r), aL=jointAngle(lms,JOINTS.elbow_l);
+    if(aR!==null) drawTag(P[JOINTS.elbow_r.pts[1]], 'R '+Math.round(aR)+'°', '#FF5C00');
+    if(aL!==null) drawTag(P[JOINTS.elbow_l.pts[1]], 'L '+Math.round(aL)+'°', '#FF5C00');
+    updatePressLive(avgOf(aR,aL), aR, aL);
   }else{
     const ang = jointAngle(lms, J);
-    if(ang!==null){
-      drawTag(P[J.pts[1]], `${J.label} ${Math.round(ang)}°`, '#FF5C00');
-      updateRomLive(ang, J);
-    }
+    if(ang!==null) drawTag(P[J.pts[1]], `${J.label} ${Math.round(ang)}°`, '#FF5C00');
+    updateGeneralLive(ang, J);
   }
 
   if(pelvisBad){
@@ -442,6 +659,117 @@ function draw(res){
     registerCompensation();
   }
   if(session) $('rectime').textContent = fmtTime((Date.now()-session.start)/1000);
+}
+
+/* ================= squat / deadlift / press / general live metrics ================= */
+function classifyDeltaDepth(delta){
+  if(delta===null) return '--';
+  if(delta >= 0.04) return '淺 Shallow';
+  if(delta > -0.02) return '平行 Parallel';
+  return '低於平行 Below Parallel';
+}
+function hipKneeDelta(lms){
+  if((lms[23].visibility??1)<.5||(lms[24].visibility??1)<.5||(lms[25].visibility??1)<.5||(lms[26].visibility??1)<.5) return null;
+  return (lms[23].y+lms[24].y)/2 - (lms[25].y+lms[26].y)/2;
+}
+function updateSquatDlLive(avg, lms, tl){
+  $('arc-val').textContent = avg===null?'--':Math.round(avg)+'°';
+  $('arc-lab').textContent = dlType==='squat' ? '膝角 KNEE' : '髖角 HIP';
+  $('mini-val').textContent = avg===null?'--':Math.round(avg)+'°';
+  $('mini-lab').textContent = dlType==='squat' ? '膝角' : '髖角';
+  $('m-a-l').textContent = dlType==='squat' ? '蹲深 Depth' : '背部角度 Back°';
+  const backAbs = tl===null?null:Math.abs(tl);
+  lastTrunkLean = backAbs ?? lastTrunkLean;
+  $('m-a').innerHTML = dlType==='squat' ? squatDepthLabel(lms) : (backAbs===null?'--':backAbs.toFixed(0)+'<small>°</small>');
+  $('m-b-l').textContent = '上一下 Last Rep';
+  if(!session || session.type!==dlType) return;
+  if(repCounter.state!=='top'){
+    if(dlType==='squat'){
+      const d = hipKneeDelta(lms);
+      if(d!==null && (session.bestDelta===null || d<session.bestDelta)){ session.bestDelta=d; session.bestBack=backAbs; }
+    }else if(backAbs!==null && (session.bestBack===null || backAbs>session.bestBack)){
+      session.bestBack = backAbs;
+    }
+  }
+  const completed = updateRep(repCounter, avg, REP_THRESH[dlType], ()=>{
+    const back = session.bestBack===null||session.bestBack===undefined ? null : Math.round(session.bestBack);
+    const out = dlType==='squat'
+      ? { depth: classifyDeltaDepth(session.bestDelta), backAngle: back }
+      : { backAngle: back, backDelta: (neutralBackAngle!==null && back!==null) ? Math.round(back-neutralBackAngle) : null };
+    session.bestDelta=null; session.bestBack=null;
+    return out;
+  });
+  if(completed) onRepCompleted(completed);
+}
+function updatePressLive(avg, aR, aL){
+  $('arc-val').textContent = avg===null?'--':Math.round(avg)+'°';
+  $('arc-lab').textContent = '手肘 ELBOW';
+  $('mini-val').textContent = avg===null?'--':Math.round(avg)+'°';
+  $('mini-lab').textContent = '手肘';
+  $('m-a-l').textContent = '左右差 L/R Δ';
+  const diff = (aR!==null&&aL!==null) ? Math.round(Math.abs(aR-aL)) : null;
+  $('m-a').innerHTML = diff===null?'--':diff+'<small>°</small>';
+  $('m-b-l').textContent = '上一下 Last Rep';
+  if(!session || session.type!=='press') return;
+  if(repCounter.state!=='top' && diff!==null && (session.bestDiff===null || diff>session.bestDiff)) session.bestDiff=diff;
+  const completed = updateRep(repCounter, avg, REP_THRESH.press, ()=>{
+    const d = session.bestDiff; session.bestDiff=null;
+    return { lrDiff: d };
+  });
+  if(completed) onRepCompleted(completed);
+}
+function updateGeneralLive(ang, J){
+  $('arc-val').textContent = ang===null?'--':Math.round(ang)+'°';
+  $('arc-lab').textContent = J.label;
+  $('mini-val').textContent = ang===null?'--':Math.round(ang)+'°';
+  $('mini-lab').textContent = J.label;
+  $('m-a-l').textContent = '本次 ROM';
+  $('m-b-l').textContent = '上一下 Last Rep';
+  if(!session || session.type!=='general') return;
+  const thresh = { high: J.norm*0.9, low: J.norm*0.5, hys: Math.max(4, J.norm*0.05) };
+  const completed = updateRep(repCounter, ang, thresh, ()=>({ joint: J.label }));
+  if(completed) onRepCompleted(completed);
+  $('m-a').innerHTML = (repCounter.minV!==null && repCounter.maxV!==null) ? Math.round(repCounter.maxV-repCounter.minV)+'<small>°</small>' : '--<small>°</small>';
+}
+function onRepCompleted(rep){
+  $('repcount').textContent = String(repCounter.count);
+  if(navigator.vibrate) navigator.vibrate(40);
+  const t = sessionType();
+  const warn = repIsWarn(rep, t);
+  const item = document.createElement('div');
+  item.className = 'rep-log-item' + (warn?' warn':'');
+  item.innerHTML = `<span>第 ${rep.n} 下</span><span>${repSummaryText(rep, t)}</span>`;
+  $('replog').prepend(item);
+}
+function repSummaryText(rep, t){
+  if(t==='squat') return `${rep.depth} · 膝${rep.min}–${rep.max}° · 背${rep.backAngle??'--'}°`;
+  if(t==='deadlift'){
+    const d = rep.backDelta;
+    return `髖${rep.min}–${rep.max}° · 背${rep.backAngle??'--'}°${(d!==null&&d!==undefined)?' (Δ'+d+'°)':''}`;
+  }
+  if(t==='press') return `肘${rep.min}–${rep.max}° · 左右差${rep.lrDiff??'--'}°`;
+  return `${rep.joint} ROM ${rep.max-rep.min}°`;
+}
+function repIsWarn(rep, t){
+  if(t==='squat') return rep.depth==='淺 Shallow';
+  if(t==='deadlift') return rep.backDelta!==null && rep.backDelta!==undefined && Math.abs(rep.backDelta)>15;
+  if(t==='press') return rep.lrDiff!==null && rep.lrDiff>10;
+  return false;
+}
+function repsSummarySvg(reps, t){
+  if(!reps || !reps.length) return '';
+  const rows = reps.slice(-8);
+  const rowH = 24, h = rows.length*rowH+6;
+  const items = rows.map((r,i)=>{
+    const y = 4+i*rowH;
+    const warn = repIsWarn(r, t);
+    const color = warn ? '#FF3B5C' : '#FF5C00';
+    const label = repSummaryText(r, t).replace(/&/g,'&amp;').replace(/</g,'&lt;');
+    return `<text x="0" y="${y+12}" fill="#8A8580" font-family="DM Mono" font-size="10">#${r.n}</text>
+      <rect x="24" y="${y}" width="8" height="16" rx="3" fill="${color}" opacity="${warn?0.9:0.55}"/>
+      <text x="40" y="${y+12}" fill="#F5F2EE" font-family="DM Mono" font-size="9.5">${label}</text>`;
+  }).join('');
+  return `<svg width="280" height="${h}" viewBox="0 0 280 ${h}">${items}</svg>`;
 }
 
 /* ================= CARs ================= */
@@ -615,7 +943,13 @@ function registerCompensation(){
 }
 
 /* ================= pose state ================= */
-const MODE_NAME = { rom:'評估', sym:'雙側對比', cars:'CARs' };
+const MODE_NAME = { rom:'評估', sym:'雙側對比', cars:'CARs', squat:'深蹲評估', deadlift:'硬舉評估', press:'軍推評估', general:'動作評估' };
+function sessionType(){
+  if(category==='squatdl') return dlType;
+  if(category==='press') return 'press';
+  if(category==='general') return 'general';
+  return appMode;
+}
 function setPoseState(n, jointVisible){
   const locked = n>=18 || jointVisible;
   poseLocked = locked;
@@ -624,7 +958,7 @@ function setPoseState(n, jointVisible){
   if(!session){
     $('sessionbtn').disabled = !locked;
     $('minibtn').disabled = !locked;
-    $('sessionbtn').textContent = locked ? '開始'+MODE_NAME[appMode] : '等待偵測 · 目標關節要入鏡';
+    $('sessionbtn').textContent = locked ? '開始'+MODE_NAME[sessionType()] : '等待偵測 · 目標關節要入鏡';
     $('minibtn').textContent = locked?'開始':'等偵測';
   }
 }
@@ -666,15 +1000,17 @@ $('minibtn').onclick = ()=> session ? endSession() : startSession();
 
 function startSession(){
   lastTheta=null;
+  resetRepCounter();
   session = {
-    start:Date.now(), joint:currentJoint, type:appMode,
+    start:Date.now(), joint:currentJoint, type:sessionType(),
     min:Infinity, max:-Infinity,
     minR:Infinity, maxR:-Infinity, minL:Infinity, maxL:-Infinity,
+    bestDelta:null, bestBack:null, bestDiff:null,
     segs:new Array(SEGS).fill(0),
     velBuf:[], comps:0, lastCompAt:0,
     client: curClient()?.name || null
   };
-  $('sessionbtn').textContent='結束'+MODE_NAME[appMode];
+  $('sessionbtn').textContent='結束'+MODE_NAME[sessionType()];
   $('sessionbtn').classList.add('stop');
   $('minibtn').textContent='結束'; $('minibtn').classList.add('stop');
   $('recchip').style.display='inline-flex';
@@ -685,14 +1021,19 @@ function startSession(){
 
 function endSession(){
   const t = session.type;
+  const isRepType = (t==='squat'||t==='deadlift'||t==='press'||t==='general');
   let nothing=false, rec=null;
   if(t==='cars') nothing = session.segs.every(s=>s===0);
   else if(t==='sym') nothing = session.maxR===-Infinity && session.maxL===-Infinity;
+  else if(isRepType) nothing = repCounter.count===0;
   else nothing = session.max===-Infinity;
 
   if(t==='sym' && !nothing && (session.maxR===-Infinity || session.maxL===-Infinity)){
     toast('兩邊關節都要入鏡先做到對比——再嚟一次');
     nothing=true;
+  }
+  if(isRepType && nothing){
+    toast('未偵測到完整一下——再嚟一次');
   }
   if(nothing){
     stopRecording();
@@ -715,6 +1056,10 @@ function endSession(){
     rec.romL = Math.round(session.maxL-session.minL);
     rec.asym = (rec.romR>5&&rec.romL>5)
       ? Math.round(Math.abs(rec.romR-rec.romL)/Math.max(rec.romR,rec.romL)*100) : null;
+  }else if(isRepType){
+    rec.repCount = repCounter.count;
+    rec.reps = repCounter.reps.map(r=>({...r}));
+    if(t==='general') rec.joint = currentJoint;
   }else{
     rec.rom = Math.round(session.max-session.min);
     rec.max = Math.round(session.max);
@@ -722,6 +1067,7 @@ function endSession(){
   const all = loadSessions();
   let prev=null;
   if(t==='sym') prev=[...all].reverse().find(s=>s.type==='sym'&&s.pair===rec.pair&&s.client===rec.client);
+  else if(isRepType) prev=[...all].reverse().find(s=>s.type===t&&s.client===rec.client&&(t!=='general'||s.joint===rec.joint));
   else prev=[...all].reverse().find(s=>s.type===t&&s.joint===rec.joint&&s.client===rec.client);
   all.push(rec); saveSessions(all);
 
@@ -771,6 +1117,17 @@ function showResult(rec, prev){
       $('r-3').style.color = rec.asym>15?'var(--deficit)':rec.asym>8?'var(--warn)':'var(--good)';
     }else $('r-3').textContent='--';
     $('clockmap').innerHTML = symBarsSvg(rec.romR, rec.romL);
+  }else if(rec.type==='squat'||rec.type==='deadlift'||rec.type==='press'||rec.type==='general'){
+    const titles = { squat:'深蹲評估結果', deadlift:'硬舉評估結果', press:'軍推評估結果',
+      general: rec.joint ? JOINTS[rec.joint].label+' 動作評估結果' : '動作評估結果' };
+    $('r-title').textContent = titles[rec.type];
+    $('r-1').textContent = String(rec.repCount); $('r-1l').textContent='次數 REPS'; $('r-1').style.color='';
+    if(prev && prev.repCount!==undefined){
+      const d = rec.repCount-prev.repCount;
+      $('r-2').textContent=(d>=0?'+':'')+d; $('r-2l').textContent='對上次次數';
+      $('r-2').style.color = d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)';
+    }else{ $('r-2').textContent='首次'; $('r-2l').textContent='對上次'; $('r-2').style.color='var(--muted)'; }
+    $('clockmap').innerHTML = repsSummarySvg(rec.reps, rec.type);
   }else{
     $('r-title').textContent = JOINTS[rec.joint].label+' 評估結果';
     $('r-1').textContent = rec.rom+'°'; $('r-1l').textContent='ROM'; $('r-1').style.color='';
@@ -820,6 +1177,29 @@ function buildInterpretation(rec, prev){
     if(rec.coverage<60) s+=` 圈未行完整，可能關節主動控制到呢個位就到頂——呢個正正係要練嘅範圍。`;
     if(rec.compSegs>0) s+=` 有 <b>${rec.compSegs}個</b>方位出現代償，睇返clock map嗰幾點鐘位，嗰度係控制最弱嘅角度。`;
     else if(rec.coverage>=60) s+=` 全程冇代償，控制質素好。`;
+    return s;
+  }
+  if(rec.type==='squat'||rec.type==='deadlift'||rec.type==='press'||rec.type==='general'){
+    const warnReps = (rec.reps||[]).filter(r=>repIsWarn(r, rec.type));
+    const names = { squat:'深蹲', deadlift:'硬舉', press:'軍推', general:'呢個動作' };
+    let s = `<span class="tone">解讀</span>呢次${names[rec.type]}評估完成 <b>${rec.repCount}下</b>。`;
+    if(prev && prev.repCount!==undefined){
+      const d = rec.repCount-prev.repCount;
+      if(d>0) s+=` 對比上次多做咗 <b>${d}下</b>。`;
+      else if(d<0) s+=` 對比上次少做咗 ${Math.abs(d)}下，可能當日狀態或者熱身唔夠。`;
+    }
+    if(rec.type==='squat'){
+      const shallow = warnReps.length;
+      if(shallow>0) s+=` 其中 <b>${shallow}下</b>深度偏淺（未到平行），可以留意蹲深控制。`;
+      else s+=` 每下深度都有到平行或以下，控制不錯。`;
+    }else if(rec.type==='deadlift'){
+      if(warnReps.length>0) s+=` 有 <b>${warnReps.length}下</b>背部角度偏離中立超過15°，留意提舉時保持背部中立，減低受傷風險。`;
+      else s+=` 背部角度大致維持中立，模式良好。`;
+    }else if(rec.type==='press'){
+      if(warnReps.length>0) s+=` 有 <b>${warnReps.length}下</b>左右手肘角度差超過10°，可能其中一邊發力較弱或唔對稱，值得留意。`;
+      else s+=` 左右對稱度良好。`;
+    }
+    if(rec.comps>0) s+=` 過程中偵測到 <b>${rec.comps}次</b>骨盆代償。`;
     return s;
   }
   return '';
@@ -967,6 +1347,16 @@ function renderProgress(){
       sub=`R ${s.romR}° / L ${s.romL}° · 代償×${s.comps}`;
       const col = s.asym===null?'var(--muted)':s.asym>15?'var(--deficit)':s.asym>8?'var(--warn)':'var(--good)';
       dHtml=`<div class="delta" style="color:${col}">${s.asym===null?'--':s.asym+'%'}</div>`;
+    }else if(s.type==='squat'||s.type==='deadlift'||s.type==='press'||s.type==='general'){
+      const names = { squat:'深蹲', deadlift:'硬舉', press:'軍推', general: s.joint?JOINTS[s.joint].label:'動作' };
+      const warnCount = (s.reps||[]).filter(r=>repIsWarn(r, s.type)).length;
+      main=`${names[s.type]}評估 · ${s.repCount}下`;
+      sub=`smoothness ${s.smooth}% · 代償 ×${s.comps}${warnCount?' · 留意 ×'+warnCount:''}`;
+      const hist=all.slice(0, all.length-1-idx);
+      const prev=[...hist].reverse().find(p=>p.type===s.type&&p.client===s.client&&(s.type!=='general'||p.joint===s.joint));
+      const d=prev? s.repCount-prev.repCount : null;
+      dHtml = d===null?`<div class="delta" style="color:var(--muted)">首次</div>`
+        :`<div class="delta" style="color:${d>0?'var(--good)':d<0?'var(--deficit)':'var(--muted)'}">${d>=0?'+':''}${d}下</div>`;
     }else{
       main=`${JOINTS[s.joint].label} ROM ${s.rom}°`;
       sub=`smoothness ${s.smooth}% · 代償 ×${s.comps}`;
